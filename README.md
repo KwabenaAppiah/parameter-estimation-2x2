@@ -31,7 +31,6 @@ EV_TYPE (eigenvalue type) and PP_TYPE (phase portrait type):
 
 
 1. rde = real distinct eigenvalues
-
 saddle
 
 source

@@ -22,18 +22,26 @@ python parameter_estimation.py EV_TYPE PP_TYPE MU_VAL RLX_TIME BND_VAL LOOP_LIM
 
 EV_TYPE (eigenvalue type) and PP_TYPE (phase portrait type):
 1. rde = real distinct eigenvalues
+
 saddle
+
 source
+
 sink
 
 2. re = repeated eigenvalues
 sink
+
 source
+
 Note: Currently there’s an issue with the trace-determinant graph for these two areas.
 
 3. ce =  complex eigenvalues
+
 sp_sink = Spiral sink
+
 sp_source = spiral source
+
 center
 
 MU_VAL (µ):

@@ -31,6 +31,7 @@ saddle, source, sink
 
 
 2. re = repeated eigenvalues
+
 sink, source
 
 Note: Currently there’s an issue with the trace-determinant graph for these two areas.

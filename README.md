@@ -42,11 +42,9 @@ Note: Currently there’s an issue with the trace-determinant graph for these tw
 sp_sink = Spiral sink, sp_source = spiral source, center
 
 
-MU_VAL (µ):
-The nudging parameter
+MU_VAL (µ): The nudging parameter
 
-RLX_TIME:
-Relaxation time
+RLX_TIME: Relaxation time
 
 BND_VAL: Bound Val, or the boundaries of which the randomly generated matrix values are pulled from.
 Thus, the sample line above would cover a boundary from -5 to 5, inclusive.
@@ -66,17 +64,21 @@ This script outputs four types of documents into a folder called output (which i
 Please note, the filenames may change depending on the eigenvalue and phase portrait of the matrices.
 
 1. tr_det_graph.png
+
 A graph of the trace-determinant plane with each randomly generated matrix represented by a colored dot.
 Moreover, the color of these dots are representative of each matrix’s average relative error. Currently, this is the only
 graphic that visualizes all of the matrices generated.
 
 2. bad_matricies.txt
+
 A list of “bad matricies” above a certain average relative error threshold.
 
 3. line_graph_indv.png
+
 An individual line graph for each matrix with a certain average relative error threshold.
 
 4.line_graph_comp.png
+
 A composite line graph that contains all of the bad matrices produced. Moreover, the content
 found here should mirror that of the content found in bad_matricies.txt.
 

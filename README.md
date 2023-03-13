@@ -18,9 +18,9 @@ and its predecessor, please check here: https://github.com/taylorbn/linear_nudgi
 
 HOW DO I RUN THIS SCRIPT?
 
-A sample from the command line: python parameter_estimation.py rde saddle 100 10 5 30
+SAMPLE: python parameter_estimation.py rde saddle 100 10 5 30
 
-Context: python parameter_estimation.py EV_TYPE PP_TYPE MU_VAL RLX_TIME BND_VAL LOOP_LIM
+CONTEXT: python parameter_estimation.py EV_TYPE PP_TYPE MU_VAL RLX_TIME BND_VAL LOOP_LIM
 
 EV_TYPE (eigenvalue type) and PP_TYPE (phase portrait type):
 

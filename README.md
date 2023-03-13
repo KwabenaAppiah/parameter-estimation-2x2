@@ -18,7 +18,7 @@ and its predecessor, please check here: https://github.com/taylorbn/linear_nudgi
 
 HOW DO I RUN THIS SCRIPT?
 
-SAMPLE(S): 
+SAMPLE COMMAND LINE PROMPTS:
 - python parameter_estimation.py rde saddle 100 10 5 30
 - python parameter_estimation.py ce sp_sink 90 10 7 25 
 

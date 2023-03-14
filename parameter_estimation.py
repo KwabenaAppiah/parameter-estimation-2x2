@@ -1,23 +1,30 @@
 import sys
-from linear_nudging_alg import LinearNudgingAlg
+from linear_nudging_alg import LinearNudgingAlg  # lorpy
 
-def main ():
+
+def main():
+    """
+    command line arguments:
+      1: string:  eigenvalue type,
+      2: string:  phase portrait type,
+      3: integer: mu,
+      4: integer: relaxation time,
+      5: integer: bound_val, # <= 5 for best performance
+      6: integer: loop_limit
+    """
     if len(sys.argv) == 7:
-            str_inputs = sys.argv[1:3]
-            ev_type, pp_type = str_inputs
-            int_inputs = sys.argv[3:7]
-            mu_val, relax_time, bound_val, loop_limit = int(int_inputs[0]), int(int_inputs[1]), int(int_inputs[2]), int(int_inputs[3])
-            lin_nudge_alg = LinearNudgingAlg(mu_val, relax_time, ev_type, pp_type, bound_val, loop_limit)
-            # bound_val = 5 recommended for testing purposes
-            # Note: The algorithm starts to perform poorly w/ a higher bound_val.
-
-
-    elif len(sys.argv) != 7:
-        print("ERROR: You're missing one or more parameters.")
+        ev_type = sys.argv[1]
+        pp_type = sys.argv[2]
+        mu_val = int(sys.argv[3])
+        relax_time = int(sys.argv[4])
+        bound_val = int(sys.argv[5])
+        loop_limit = int(sys.argv[6])
+        lin_nudge_alg = LinearNudgingAlg(
+        ev_type, pp_type, mu_val, relax_time, bound_val, loop_limit)
 
     else:
-        print("ERROR: Please check your parameters.")
+        print("This process requires exactly 7 parameters.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

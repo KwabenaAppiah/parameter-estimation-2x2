@@ -1,18 +1,20 @@
+import math
+import random
+import sys
+import time
+
+import matplotlib.pyplot as plt
+import numpy as np
 from scipy.integrate import solve_ivp
+
+# lorenz nudge, project-specific
 from tr_det_graph import TrDetGraph
 from line_graph_indv import LineGraphIndv
 from line_graph_comp import LineGraphComp
 from matrix_2x2 import Matrix2x2
-import matplotlib.pyplot as plt
-import numpy as np
-import random
-import time
-import math
-import sys
-
 
 class LinearNudgingAlg:
-    def __init__(self, mu_val, relax, ev_type, pp_type, bnd_val, loop_limit):
+    def __init__(self, ev_type, pp_type, mu_val, relax_time, bnd_val, loop_limit):
         low_bnd, high_bnd = -bnd_val, bnd_val
         self.set_rule(2)
 
@@ -68,8 +70,8 @@ class LinearNudgingAlg:
 
                     # ------------ Algorithm parameters ---------------- (Moved out of loop)
 
-                    # Relaxation period (time to wait between updates)
-                    time_between = np.array([relax] * 4)
+                    # relax_timeation period (time to wait between updates)
+                    time_between = np.array([relax_time] * 4)
 
                     # Position, velocity thresholds for updates  --- (Moved out of loop)
 
@@ -389,13 +391,9 @@ class LinearNudgingAlg:
         a11s, a12s, a21s, a22s = guesses
         a11,  a12,  a21,  a22  = true_vals
 
-        # print('Runtime: {:.4f} seconds. \nFinal a11 abs. error: {:.4e} \nFinal a12 abs. error: {:.4e} \nFinal a21 abs. error: {:.4e} \nFinal a22 abs. error: {:.4e}'.format(time.time() - start,
-        #                                                                                                                                                        abs(a11 - a11s)[-1],
-        #                                                                                                                                                        abs(a12 - a12s)[-1],
-        #                                                                                                                                                        abs(a21 - a21s)[-1],
-        #                                                                                                                                                        abs(a22 - a22s)[-1]))
-        #
-        #
-        #
-        # print("\n")
+        #print("Runtime: {:.4f} seconds.\n".format(time.time() - start))
+        #print("Final a11 abs. error: {:.4e}\n".format(abs(a11 - a11s)[-1]))
+        #print("Final a12 abs. error: {:.4e}\n".format(abs(a12 - a12s)[-1]))
+        #print("Final a21 abs. error: {:.4e}\n".format(abs(a21 - a21s)[-1]))
+        #print("Final a22 abs. error: {:.4e}\n".format(abs(a22 - a22s)[-1]))
         return sol, guesses, derivs

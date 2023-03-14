@@ -16,10 +16,10 @@ class LineGraphComp:
 
 
     #GETTERS
-    def get_bad_matrices(self):
-        return self._mtrx_dict
+    # def has_bad_matrices(self):
+    #     return self._mtrx_dict
 
-    def get_bad_matrices_exist(self):
+    def has_bad_matrices(self):
         return self._bad_matrices_exist
 
 
@@ -29,7 +29,6 @@ class LineGraphComp:
     def get_pp_type(self):
         return self._pp_type
 
-
     def get_subplots(self):
         return self._fig, self._ax
 
@@ -38,7 +37,7 @@ class LineGraphComp:
 
 
 #SETTERS
-    def set_bad_matrices_exist(self, bool):
+    def set_has_bad_matrices(self, bool):
         self._bad_matrices_exist = bool
 
     def set_subplots(self, name):
@@ -53,31 +52,31 @@ class LineGraphComp:
 
 
     def organize_data(self, guesses, true_vals, cycle_num):
-        alphas, betas, deltas, gammas = guesses
-        alpha, beta, delta, gamma  = true_vals
+        a11s, a12s, a21s, a22s = guesses
+        a11, a12, a21, a22  = true_vals
         total_err_steps = []
-        rel_delta_err = []
-        rel_gamma_err = []
+        a21_rel_err = []
+        a22_rel_err = []
 
-        if delta != 0 and gamma != 0:
+        if a21 != 0 and a22 != 0:
             j = 0
-            for i in range(len(deltas)):
-                rel_delta_err.append(abs(deltas[i] - delta) / abs(delta))
-                rel_gamma_err.append(abs(gammas[i] - gamma) / abs(gamma))
-                total_err_steps.append( abs(rel_delta_err[i] + rel_gamma_err[i]) / 2)
+            for i in range(len(a21s)):
+                a21_rel_err.append(abs(a21s[i] - a21) / abs(a21))
+                a22_rel_err.append(abs(a22s[i] - a22) / abs(a22))
+                total_err_steps.append( abs(a21_rel_err[i] + a22_rel_err[i]) / 2)
 
             #Select based on final val (i.e. like Tr / Det plane)
-            rel_delta_err_final = abs(deltas[-1] - delta) / abs(delta)
-            rel_gamma_err_final = abs(gammas[-1] - gamma) / abs(gamma)
-            rel_avg_dg_err_final = abs(rel_delta_err_final +  rel_gamma_err_final) / 2
+            a21_nth_rel_err = abs(a21s[-1] - a21) / abs(a21)
+            a22_nth_rel_err = abs(a22s[-1] - a22) / abs(a22)
+            a21_a22_nth_avg_rel_err = abs(a21_nth_rel_err +  a22_nth_rel_err) / 2
 
-            if rel_avg_dg_err_final  > 1e-3:
+            if a21_a22_nth_avg_rel_err  > 1e-3:
                 self.plot_graph(cycle_num, total_err_steps)
-                self.set_bad_matrices_exist(True)
+                self.set_has_bad_matrices(True)
                 return True
 
         else:
-            # print("Delta:", abs(delta), "and Gamma:", abs(gamma) )
+            # print("a21:", abs(a21), "and a22:", abs(a22) )
             # print("Mtrx.", true_vals, "is not plottable.")
             return False
 
@@ -96,7 +95,7 @@ class LineGraphComp:
 
 
     def display(self):
-        if self.get_bad_matrices_exist() != False:
+        if self.has_bad_matrices() != False:
             true_vals, ev_type, pp_type = self.get_true_vals(), self.get_ev_type(), self.get_pp_type()
 
             fig, ax = self.get_subplots()

@@ -13,11 +13,13 @@ class Matrix2x2:
 
     def __str__(self):
         return str(self._matrix)
-
+    
+    # For generating matrices populated with float values
     # def get_random_matrix(self, low_bnd, high_bnd):
     #  self._matrix = np.random.uniform(low_bnd, high_bnd, (2, 2))
     #  return self._matrix
-
+    
+    # For generating matrices populated with integer values
     def get_random_matrix(self, low_bnd, high_bnd):
         is_mtrx_ready = False
 

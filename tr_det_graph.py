@@ -62,12 +62,8 @@ class TrDetGraph:
         self._ax.xaxis.set_ticks_position("bottom")
         self._ax.yaxis.set_ticks_position("left")
 
-        self._ax.plot(
-            1, 0, ">k", transform=self._ax.get_yaxis_transform(), clip_on=False
-        )
-        self._ax.plot(
-            0, 1, "^k", transform=self._ax.get_xaxis_transform(), clip_on=False
-        )
+        self._ax.plot(1, 0, ">k", transform=self._ax.get_yaxis_transform(), clip_on=False)
+        self._ax.plot(0, 1, "^k", transform=self._ax.get_xaxis_transform(), clip_on=False)
 
     def organize_data(self, guesses, true_vals):
         a11, a12, a21, a22 = true_vals
@@ -84,9 +80,6 @@ class TrDetGraph:
         if a21 != 0 and a22 != 0 and math.isinf(a21_a22_avg_rel_err) != True:
             trace = a11 + a22
             det = a11 * a22 - a12 * a21
-            # print("\n" + "Mtrx: " + "[" + "[" + str(a11) + ", " + str(a12) + "]"+ ", " + "[" + str(a21) + ", " + str(a22) + "]" + "]" + "\n")
-            #
-            # print("\n" + "Matrix:" + "\n")
             print("")
             print(np.matrix([[a11, a12], [a21, a22]]), "\n")
             print("Tr:", trace, "", "Det:", det, "\n")
@@ -146,7 +139,7 @@ class TrDetGraph:
             Line2D([0],[0], marker="o", markerfacecolor="r", color="w", alpha=0.3, markersize=7, label="$μ_{Err}$ > 1e-3"),
             Line2D([0], [0], marker="o", markerfacecolor="#800080", color="w", alpha=0.3, markersize=7, label="$μ_{Err}$ > 1e-5"),
             Line2D([0],[0], marker="o", markerfacecolor="b", color="w", alpha=0.3, markersize=7, label="$μ_{Err}$ > 1e-8"),
-            Line2D([0],[0], marker="o", markerfacecolor="b", color="w", markersize=7, label="Less than 1e-8"),
+            Line2D([0],[0], marker="o", markerfacecolor="b", color="w", markersize=7, label="Below 1e-8"),
             Line2D([0], [0], color="orange", alpha=1, lw=3, label="T\N{SUPERSCRIPT TWO} - 4D = 0")]
 
         ax.legend(handles=custom_handles, loc="best", bbox_to_anchor=(1, 0.5))

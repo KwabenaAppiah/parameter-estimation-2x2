@@ -210,7 +210,6 @@ class LinearNudgingAlg:
             'drop_deriv': [(a21_t * xt + a11_t * yt - a21 * x - mu_1 * u - mu_2 * v) / y,
                            (a12_t * xt  + a22_t * yt - a22 * y - mu_3 * v - mu_4 * v) / x,
                            (a21_t * xt + a11_t * yt - a11 * y - mu_1 * u - mu_2 * v) / x,
-                           # (a12_t * xt  + a22_t * yt - a12 * x  - mu_3 * v - mu_4 * v) / y], #Extra comma - Removed on 2023.02.03
                            (a12_t * xt  + a22_t * yt - a12 * x  - mu_3 * v - mu_4 * v) / y]
         }
 

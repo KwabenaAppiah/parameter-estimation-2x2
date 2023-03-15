@@ -15,6 +15,10 @@ class LineGraphComp:
         self.set_subplots("Composite of Bad Matrices")
 
 
+    #GETTERS
+    # def has_bad_matrices(self):
+    #     return self._mtrx_dict
+
     def has_bad_matrices(self):
         return self._bad_matrices_exist
 

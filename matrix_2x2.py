@@ -14,23 +14,23 @@ class Matrix2x2:
     def __str__(self):
         return str(self._matrix)
 
+    # def get_random_matrix(self, low_bnd, high_bnd):
+    #  self._matrix = np.random.uniform(low_bnd, high_bnd, (2, 2))
+    #  return self._matrix
+
     def get_random_matrix(self, low_bnd, high_bnd):
         is_mtrx_ready = False
 
         while is_mtrx_ready == False:
             self._matrix = np.random.randint(low_bnd, high_bnd, (2, 2))
             # if self._matrix[1, 0] != 0 and self._matrix[1, 1] != 0: # i.e. if gamma or delta equals zero, find another mtrx.
-            if (
-                self.get_element(1, 0) != 0 and self.get_element(1, 1) != 0
-            ):  # i.e. if gamma or delta equals zero, find another mtrx.
+            if self.get_element(1, 0) != 0 and self.get_element(1, 1) != 0:  # i.e. if gamma or delta equals zero, find another mtrx.
                 is_mtrx_ready = True
                 break
 
         return self._matrix
 
-    # def get_random_matrix(self, low_bnd, high_bnd):
-    #  self._matrix = np.random.uniform(low_bnd, high_bnd, (2, 2))
-    #  return self._matrix
+
 
     def get_matrix(self, low_bnd, high_bnd, ev_type, pp_type):
         ########## Real distinct eigenvalues: T^2 - 4D > 0 Below the parabola ###########
@@ -101,13 +101,7 @@ class Matrix2x2:
         # ***************** D > 0 and T > 0: 0 < ev_1 < ev_2: SOURCE *****************************************
         elif ev_type == "rde" and pp_type == "source":
             while rule != True:
-                if (
-                    (tr**2) - 4 * det > 0
-                    and det > 0
-                    and tr > 0
-                    and 0 < ev_1
-                    and ev_1 < ev_2
-                ):
+                if (tr**2) - 4 * det > 0 and det > 0 and tr > 0 and 0 < ev_1 and ev_1 < ev_2:
                     rule = True
                     break
 
@@ -119,13 +113,7 @@ class Matrix2x2:
         # ***************** D > 0 and T < 0: ev_1 < ev_2 < 0: SINK *********************************************
         elif ev_type == "rde" and pp_type == "sink":
             while rule != True:
-                if (
-                    (tr**2) - 4 * det > 0
-                    and det > 0
-                    and tr < 0
-                    and ev_1 < ev_2
-                    and ev_2 < 0
-                ):
+                if (tr**2) - 4 * det > 0 and det > 0 and tr < 0 and ev_1 < ev_2 and ev_2 < 0:
                     rule = True
                     break
 

@@ -19,8 +19,7 @@ def main():
         relax_time = int(sys.argv[4])
         bound_val = int(sys.argv[5])
         loop_limit = int(sys.argv[6])
-        lin_nudge_alg = LinearNudgingAlg(
-        ev_type, pp_type, mu_val, relax_time, bound_val, loop_limit)
+        lin_nudge_alg = LinearNudgingAlg(ev_type, pp_type, mu_val, relax_time, bound_val, loop_limit)
 
     else:
         print("This process requires exactly 7 parameters.")

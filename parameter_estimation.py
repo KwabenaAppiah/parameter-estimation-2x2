@@ -9,7 +9,7 @@ def main():
       2: string:  phase portrait type,
       3: integer: mu,
       4: integer: relaxation time,
-      5: integer: bound_val, # <= 5 for best performance
+      5: float: bound_val, # <= 5 for best performance
       6: integer: loop_limit
     """
     if len(sys.argv) == 7:

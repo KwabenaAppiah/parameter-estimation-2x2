@@ -2,15 +2,15 @@ import math
 import random
 import sys
 import time
-
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import solve_ivp
 
 # lorenz nudge, project-specific
 from tr_det_graph import TrDetGraph
-from line_graph_indv import LineGraphIndv
-from line_graph_comp import LineGraphComp
+# from line_graph_indv import LineGraphIndv
+# from line_graph_comp import LineGraphComp
+from line_graph import LineGraph
 from matrix_2x2 import Matrix2x2
 
 class LinearNudgingAlg:
@@ -36,8 +36,9 @@ class LinearNudgingAlg:
         d          = 10         # Threshold decay factor
         step_val   = 10         # The step value for a22 and a21
         tr_det_graph = TrDetGraph(ev_type, pp_type, loop_limit)
-        line_graph_indv = LineGraphIndv(ev_type, pp_type)
-        line_graph_comp = LineGraphComp(ev_type, pp_type)
+        # line_graph_indv = LineGraphIndv(ev_type, pp_type)
+        # line_graph_comp = LineGraphComp(ev_type, pp_type)
+        line_graph = LineGraph(ev_type, pp_type)
 
 
         print("**********************************************", "START - SIMULATION" ,"***************************************************", '\n')
@@ -46,8 +47,10 @@ class LinearNudgingAlg:
         while i < loop_limit:
             while i != loop_limit:
                 mtrx = Matrix2x2(low_bnd, high_bnd, ev_type, pp_type)
+                # print(mtrx)
 
                 if mtrx.get_element(1, 0) == 0 and mtrx.get_element(1, 1) == 0:
+                # if False:
                      print("CYCLE:", gui_counter, " - SKIP ITERATION", 1)
                      break
 
@@ -55,6 +58,8 @@ class LinearNudgingAlg:
                     print("**********************************", "CYCLE:", gui_counter, "/" , loop_limit, "*************************************************************************", '\n')
                     print(ev_type.upper(), "-", pp_type.upper())
                     a11, a12, a21, a22 = mtrx.get_element(0, 0), mtrx.get_element(0, 1), mtrx.get_element(1, 0), mtrx.get_element(1, 1)
+                    # a11, a12, a21, a22 = mtrx.get_each_elt()
+                    # #print(a11, a12, a21, a22)
                     true_vals = np.array([a11, a12, a21, a22])
 
                     # NOTE: Code is set up to only update parameters with guesses different from
@@ -103,10 +108,8 @@ class LinearNudgingAlg:
                         time_tracker = [last_updates, time_between, self.get_tfe()]
                         args = (mus, parms, thresholds, derivs, guesses, time_tracker, updates_on, err, self.get_idx_last_updates())
                         sol, guesses, derivs = self.run_simulation(t_span, S0, t, true_vals, args)
-                        # line_graph_indv_flag = line_graph_indv.plot_graph(guesses, true_vals, i)
-                        # line_graph_comp_flag = line_graph_comp.organize_data(guesses, true_vals, i)
-                        line_graph_indv.plot_graph(guesses, true_vals, i)
-                        line_graph_comp.organize_data(guesses, true_vals, i)
+
+                        line_graph.init(guesses, true_vals, i)
                         tr_det_graph_plotted = tr_det_graph.organize_data(guesses, true_vals)
 
                         if tr_det_graph_plotted  != False:
@@ -123,7 +126,7 @@ class LinearNudgingAlg:
                         break
 
         print("**********************************************","END - SIMULATION" ,"***************************************************", '\n')
-        line_graph_comp.display()
+        line_graph.display_comp()
         tr_det_graph.display(ev_type, pp_type, loop_limit)
         plt.show()
 

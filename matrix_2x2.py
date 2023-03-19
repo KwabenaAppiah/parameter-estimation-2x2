@@ -1,6 +1,5 @@
 import math
 import random
-
 import numpy as np
 
 
@@ -9,60 +8,40 @@ class Matrix2x2:
         self._ev_type = ev_type
         self._pp_type = pp_type
         self._matrix = []
-        self.get_matrix(low_bnd, high_bnd, ev_type, pp_type)
+        self._mtrx_sample_space  = []
+        self.init_matrix(low_bnd, high_bnd, ev_type, pp_type)
 
     def __str__(self):
         return str(self._matrix)
-    
-    # For generating matrices populated with float values
-    # def get_random_matrix(self, low_bnd, high_bnd):
-    #  self._matrix = np.random.uniform(low_bnd, high_bnd, (2, 2))
-    #  return self._matrix
-    
-    # For generating matrices populated with integer values
-    def get_random_matrix(self, low_bnd, high_bnd):
-        is_mtrx_ready = False
 
-        while is_mtrx_ready == False:
-            self._matrix = np.random.randint(low_bnd, high_bnd, (2, 2))
-            # if self._matrix[1, 0] != 0 and self._matrix[1, 1] != 0: # i.e. if gamma or delta equals zero, find another mtrx.
-            if self.get_element(1, 0) != 0 and self.get_element(1, 1) != 0:  # i.e. if gamma or delta equals zero, find another mtrx.
-                is_mtrx_ready = True
-                break
-
-        return self._matrix
-
-
-
-    def get_matrix(self, low_bnd, high_bnd, ev_type, pp_type):
+    def init_matrix(self, low_bnd, high_bnd, ev_type, pp_type):
         ########## Real distinct eigenvalues: T^2 - 4D > 0 Below the parabola ###########
         if ev_type == "rde":
-            mtrx = self.get_matrix_rde(low_bnd, high_bnd, ev_type, pp_type)
+            self.set_matrix_rde(low_bnd, high_bnd, ev_type, pp_type)
 
         ########## Real distinct eigenvalues: T^2 - 4D = 0 Below the parabola ###########
         elif ev_type == "re":
-            mtrx = self.get_matrix_re(low_bnd, high_bnd, ev_type, pp_type)
+            self.set_matrix_re(low_bnd, high_bnd, ev_type, pp_type)
 
         ########## complex eigenvalues: T^2 - 4D < 0 Below the parabola ###########
         elif ev_type == "ce":
-            mtrx = self.get_matrix_ce(low_bnd, high_bnd, ev_type, pp_type)
+            self.set_matrix_ce(low_bnd, high_bnd, ev_type, pp_type)
 
         else:
             print("ERROR:", ev_type, "is not a valid input.")
             quit()
 
-        return mtrx
 
-    # SETTERS
+    def get_matrix(self):
+        return self._matrix
 
-    def set_ev_type(self, ev_type):
-        self._ev_type = ev_type
+    def get_mtrx_sample_space(self):
+        return self._mtrx_sample_space
 
-    def set_pp_type(self, pp_type):
-        self._pp_type = pp_type
+    def get_mtrx_sample_space_elt(self, index):
+        return self._mtrx_sample_space[index]
 
     #### GETTERS #####################################################
-
     def get_element(self, i, j):
         return self._matrix[i, j]
 
@@ -82,142 +61,159 @@ class Matrix2x2:
     def get_det(self, mtrx):
         return np.linalg.det(mtrx)
 
-    def get_matrix_rde(self, low_bnd, high_bnd, ev_type, pp_type):
-        mtrx = self.get_random_matrix(low_bnd, high_bnd)
+    def get_each_elt(self):
+        return self._matrix[0: 0], self._matrix[0: 1], self._matrix[1: 0], self._matrix[1: 1]
+
+    def set_matrix(self, mtrx):
+        self._matrix = mtrx
+
+    def set_mtrx_sample_space(self, new_mtrx):
+        self._mtrx_sample_space.append(new_mtrx)
+
+    #### SETTERS #####################################################
+    def set_ev_type(self, ev_type):
+        self._ev_type = ev_type
+
+    def set_pp_type(self, pp_type):
+        self._pp_type = pp_type
+
+    # For generating matrices populated with float values
+    def set_random_matrix(self, low_bnd, high_bnd):
+        self.set_matrix(np.random.uniform(low_bnd, high_bnd, (2, 2)))
+
+
+    def set_matrix_rde(self, low_bnd, high_bnd, ev_type, pp_type):
+        self.set_random_matrix(low_bnd, high_bnd)
+        mtrx = self.get_matrix()
         tr, det = self.get_trace(mtrx), self.get_det(mtrx)
         ev_1, ev_2 = self.get_eignevals(mtrx)
-        ev_type_2 = "T\N{SUPERSCRIPT TWO} - 4D > 0 (Below the parabola)"
+        has_mtrx_been_found = False
+
+        if pp_type != "saddle" and pp_type != "source" and pp_type != "sink":
+            print("ERROR:", pp_type, "is not a valid input.")
+            quit()
+
+        while has_mtrx_been_found != True:
+            # ***************** D < 0: ev_1 < 0 < ev_2: SADDLE ******************************************************
+            if pp_type == "saddle" and (tr**2 - 4*det) > 0 and det < 0 and ev_1 < 0 < ev_2:
+                has_mtrx_been_found = True
+                self.set_matrix(mtrx)
+                break
+            # ***************** D > 0 and T > 0: 0 < ev_1 < ev_2: SOURCE *****************************************
+            elif pp_type == "source" and (tr**2 - 4*det) > 0 and det > 0 and tr > 0 and 0 < ev_1 < ev_2:
+                has_mtrx_been_found = True
+                self.set_matrix(mtrx)
+                break
+
+            # ***************** D > 0 and T < 0: ev_1 < ev_2 < 0: SINK *********************************************
+            elif pp_type == "sink" and (tr**2 - 4*det) > 0 and det > 0 and tr < 0 and ev_1 < ev_2 < 0:
+                has_mtrx_been_found = True
+                self.set_matrix(mtrx)
+                break
+
+            else:
+                self.set_random_matrix(low_bnd, high_bnd)
+                mtrx = self.get_matrix()
+                tr, det = self.get_trace(mtrx), self.get_det(mtrx)
+                ev_1, ev_2 = self.get_eignevals(mtrx)
+
+
+
+    def set_matrix_re(self, low_bnd, high_bnd, ev_type, pp_type):
+
+        if pp_type != "sink" and pp_type != "source":
+            print("ERROR:", pp_type, "is not a valid input.")
+            quit()
+
+        high_bnd = high_bnd + 1
+        for a11 in np.arange(low_bnd, high_bnd, .5):
+            for a12 in np.arange(low_bnd, high_bnd, .5):
+                for a21 in np.arange(low_bnd, high_bnd, .5):
+                    for a22 in np.arange(low_bnd, high_bnd, .5):
+                        temp_mtrx = np.array([[a11, a12], [a21, a22]])
+                        tr = a11 + a22
+                        det = (a11 * a22) - (a12 * a21)
+
+                        if pp_type == "sink" and (tr**2 - 4*det) == 0 and tr < 0:
+                            self.set_mtrx_sample_space(temp_mtrx)
+
+                        elif pp_type == "source" and (tr**2 - 4*det) == 0 and tr > 0:
+                            self.set_mtrx_sample_space(temp_mtrx)
+
+        rndm_index = random.randint(0, len(self.get_mtrx_sample_space()))
+        mtrx = self.get_mtrx_sample_space_elt(rndm_index)
+        self.set_matrix(mtrx)
+
+
+    def set_matrix_ce(self, low_bnd, high_bnd, ev_type, pp_type):
+        self.set_random_matrix(low_bnd, high_bnd)
+        mtrx = self.get_matrix()
+        tr, det = self.get_trace(mtrx), self.get_det(mtrx)
+        ev_1, ev_2 = self.get_eignevals(mtrx)
         rule = False
 
-        # ***************** D < 0: ev_1 < 0 < ev_2: SADDLE ******************************************************
-        if ev_type == "rde" and pp_type == "saddle":
-            while rule != True:
-                if (tr**2) - 4 * det > 0 and det < 0 and ev_1 < 0 and 0 < ev_2:
-                    rule = True
-                    break
-                else:
-                    mtrx = self.get_random_matrix(low_bnd, high_bnd)
-                    ev_1, ev_2 = self.get_eignevals(mtrx)
-                    tr, det = self.get_trace(mtrx), self.get_det(mtrx)
+        if pp_type == "center":
+            self.set_matrix_ce_center(low_bnd, high_bnd, ev_type, pp_type)
 
-        # ***************** D > 0 and T > 0: 0 < ev_1 < ev_2: SOURCE *****************************************
-        elif ev_type == "rde" and pp_type == "source":
+        elif pp_type == "sp_sink" or pp_type == "sp_source":
             while rule != True:
-                if (tr**2) - 4 * det > 0 and det > 0 and tr > 0 and 0 < ev_1 and ev_1 < ev_2:
+                # ***************** T < 0 (Left half of the plane): SPIRAL SINK ******************************************************
+                if pp_type == "sp_sink" and (tr**2) - 4 * det < 0 and tr < 0:
                     rule = True
+                    self.set_matrix(mtrx)
                     break
 
-                else:
-                    mtrx = self.get_random_matrix(low_bnd, high_bnd)
-                    ev_1, ev_2 = self.get_eignevals(mtrx)
-                    tr, det = self.get_trace(mtrx), self.get_det(mtrx)
-
-        # ***************** D > 0 and T < 0: ev_1 < ev_2 < 0: SINK *********************************************
-        elif ev_type == "rde" and pp_type == "sink":
-            while rule != True:
-                if (tr**2) - 4 * det > 0 and det > 0 and tr < 0 and ev_1 < ev_2 and ev_2 < 0:
+                # ***************** T > 0 (Right half of the plane): SPIRAL SOURCE ******************************************************
+                elif pp_type == "sp_source" and (tr**2) - 4 * det < 0 and tr > 0:
                     rule = True
+                    self.set_matrix(mtrx)
                     break
 
+                # ***************** T = 0 (D - Axis): CENTER *****************************************************************************
                 else:
-                    mtrx = self.get_random_matrix(low_bnd, high_bnd)
-                    ev_1, ev_2 = self.get_eignevals(mtrx)
+                    self.set_random_matrix(low_bnd, high_bnd)
+                    mtrx = self.get_matrix()
                     tr, det = self.get_trace(mtrx), self.get_det(mtrx)
+                    ev_1, ev_2 = self.get_eignevals(mtrx)
 
         else:
             print("ERROR:", pp_type, "is not a valid input.")
             quit()
 
-        return mtrx
-        # **************************************************************************************************************************
 
-    def get_matrix_re(self, low_bnd, high_bnd, ev_type, pp_type):
-        mtrx = self.get_random_matrix(low_bnd, high_bnd)
-        tr, det = self.get_trace(mtrx), self.get_det(mtrx)
-        ev_1, ev_2 = self.get_eignevals(mtrx)
-        ev_type_2 = "T\N{SUPERSCRIPT TWO} - 4D = 0"
-        rule = False
+    def set_matrix_ce_center(self, low_bnd, high_bnd, ev_type, pp_type):
+        high_bnd = high_bnd + 1
+        for a11 in np.arange(low_bnd, high_bnd, .5):
+            for a12 in np.arange(low_bnd, high_bnd, .5):
+                for a21 in np.arange(low_bnd, high_bnd, .5):
+                    for a22 in np.arange(low_bnd, high_bnd, .5):
+                        temp_mtrx = np.array([[a11, a12], [a21, a22]])
+                        tr = a11 + a22
+                        det = (a11 * a22) - (a12 * a21)
+                        if (tr ** 2) - 4 * det < 0 and tr == 0:
+                            self.set_mtrx_sample_space(temp_mtrx)
 
-        # ***************** T < 0: ev_1 < 0: SINK *****************************************************
-        if ev_type == "re" and pp_type == "sink":
-            while rule != True:
-                if (tr**2) - 4 * det == 0 and tr < 0 and ev_1 < 0:
-                    rule = True
-                    break
+        rndm_index = random.randint(0, len(self.get_mtrx_sample_space()))
+        mtrx = self.get_mtrx_sample_space_elt(rndm_index)
+        self.set_matrix(mtrx)
 
-                else:
-                    mtrx = self.get_random_matrix(low_bnd, high_bnd)
-                    ev_1, ev_2 = self.get_eignevals(mtrx)
-                    tr, det = self.get_trace(mtrx), self.get_det(mtrx)
 
-        # ***************** T > 0: ev_1 > 0: SOURCE *****************************************************
-        elif ev_type == "re" and pp_type == "source":
-            while rule != True:
-                if (tr**2) - 4 * det == 0 and tr > 0 and ev_1 > 0:
-                    rule = True
-                    break
+    def set_matrix_ce_center(self, low_bnd, high_bnd, ev_type, pp_type):
+        high_bnd = high_bnd + 1
+        for a11 in np.arange(low_bnd, high_bnd, .5):
+            for a12 in np.arange(low_bnd, high_bnd, .5):
+                for a21 in np.arange(low_bnd, high_bnd, .5):
+                    for a22 in np.arange(low_bnd, high_bnd, .5):
+                        temp_mtrx = np.array([[a11, a12], [a21, a22]])
+                        tr = a11 + a22
+                        det = (a11 * a22) - (a12 * a21)
+                        if (tr**2 - 4*det) < 0 and tr == 0:
+                            self.set_mtrx_sample_space(temp_mtrx)
 
-                else:
-                    mtrx = self.get_random_matrix(low_bnd, high_bnd)
-                    ev_1, ev_2 = self.get_eignevals(mtrx)
-                    tr, det = self.get_trace(mtrx), self.get_det(mtrx)
+        rndm_index = random.randint(0, len(self.get_mtrx_sample_space()))
+        mtrx = self.get_mtrx_sample_space_elt(rndm_index)
+        self.set_matrix(mtrx)
 
-        else:
-            print("ERROR:", pp_type, "is not a valid input.")
-            quit()
-
-        return mtrx
-        # *****************************************************************************************************************
-
-    def get_matrix_ce(self, low_bnd, high_bnd, ev_type, pp_type):
-        mtrx = self.get_random_matrix(low_bnd, high_bnd)
-        tr, det = self.get_trace(mtrx), self.get_det(mtrx)
-        ev_1, ev_2 = self.get_eignevals(mtrx)
-        ev_type_2 = "T\N{SUPERSCRIPT TWO} - 4D < 0 (Above the parabola)"
-        rule = False
-
-        # ***************** T < 0 (Left half of the plane): SPIRAL SINK ******************************************************
-        if ev_type == "ce" and pp_type == "sp_sink":
-            while rule != True:
-                if (tr**2) - 4 * det < 0 and tr < 0:
-                    rule = True
-                    break
-
-                else:
-                    mtrx = self.get_random_matrix(low_bnd, high_bnd)
-                    ev_1, ev_2 = self.get_eignevals(mtrx)
-                    tr, det = self.get_trace(mtrx), self.get_det(mtrx)
-
-        # ***************** T > 0 (Right half of the plane): SPIRAL SOURCE ******************************************************
-        elif ev_type == "ce" and pp_type == "sp_source":
-            while rule != True:
-                if (tr**2) - 4 * det < 0 and tr > 0:
-                    rule = True
-                    break
-
-                else:
-                    mtrx = self.get_random_matrix(low_bnd, high_bnd)
-                    ev_1, ev_2 = self.get_eignevals(mtrx)
-                    tr, det = self.get_trace(mtrx), self.get_det(mtrx)
-
-        # ***************** T = 0 (D - Axis): CENTER *****************************************************************************
-        elif ev_type == "ce" and pp_type == "center":
-            while rule != True:
-                if (tr**2) - 4 * det < 0 and tr == 0:
-                    rule = True
-                    break
-
-                else:
-                    mtrx = self.get_random_matrix(low_bnd, high_bnd)
-                    ev_1, ev_2 = self.get_eignevals(mtrx)
-                    tr, det = self.get_trace(mtrx), self.get_det(mtrx)
-
-        else:
-            print("ERROR:", pp_type, "is not a valid input.")
-            quit()
-
-        return mtrx
-        # **************************************************************************************************************************
 
     def print_ev_pp_dvdr(self, ev_type, pp_type):
         print("**************************", ev_type.upper(), "-", pp_type.upper(),"*****************************************", "\n")

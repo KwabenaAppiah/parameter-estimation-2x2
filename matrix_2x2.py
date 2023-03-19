@@ -140,8 +140,8 @@ class Matrix2x2:
                         elif pp_type == "source" and (tr**2 - 4*det) == 0 and tr > 0:
                             self.set_mtrx_sample_space(temp_mtrx)
 
-        rndm_index = random.randint(0, len(self.get_mtrx_sample_space()))
-        mtrx = self.get_mtrx_sample_space_elt(rndm_index)
+        random_index = random.randint(0, len(self.get_mtrx_sample_space()))
+        mtrx = self.get_mtrx_sample_space_elt(random_index)
         self.set_matrix(mtrx)
 
 
@@ -182,7 +182,7 @@ class Matrix2x2:
 
 
     def set_matrix_ce_center(self, low_bnd, high_bnd, ev_type, pp_type):
-        high_bnd = high_bnd + 1
+        #high_bnd = high_bnd + 1
         for a11 in np.arange(low_bnd, high_bnd, .5):
             for a12 in np.arange(low_bnd, high_bnd, .5):
                 for a21 in np.arange(low_bnd, high_bnd, .5):
@@ -193,13 +193,13 @@ class Matrix2x2:
                         if (tr ** 2) - 4 * det < 0 and tr == 0:
                             self.set_mtrx_sample_space(temp_mtrx)
 
-        rndm_index = random.randint(0, len(self.get_mtrx_sample_space()))
-        mtrx = self.get_mtrx_sample_space_elt(rndm_index)
+        random_index = random.randint(0, len(self.get_mtrx_sample_space()))
+        mtrx = self.get_mtrx_sample_space_elt(random_index)
         self.set_matrix(mtrx)
 
 
     def set_matrix_ce_center(self, low_bnd, high_bnd, ev_type, pp_type):
-        high_bnd = high_bnd + 1
+        #high_bnd = high_bnd + 1
         for a11 in np.arange(low_bnd, high_bnd, .5):
             for a12 in np.arange(low_bnd, high_bnd, .5):
                 for a21 in np.arange(low_bnd, high_bnd, .5):
@@ -210,8 +210,9 @@ class Matrix2x2:
                         if (tr**2 - 4*det) < 0 and tr == 0:
                             self.set_mtrx_sample_space(temp_mtrx)
 
-        rndm_index = random.randint(0, len(self.get_mtrx_sample_space()))
-        mtrx = self.get_mtrx_sample_space_elt(rndm_index)
+        random_index = random.randint(0, len(self.get_mtrx_sample_space()))
+        #print("random index", random_index)
+        mtrx = self.get_mtrx_sample_space_elt(random_index)
         self.set_matrix(mtrx)
 
 

@@ -125,7 +125,7 @@ class Matrix2x2:
             print("ERROR:", pp_type, "is not a valid input.")
             quit()
 
-        high_bnd = high_bnd + 1
+        # high_bnd = high_bnd + 1
         for a11 in np.arange(low_bnd, high_bnd, .5):
             for a12 in np.arange(low_bnd, high_bnd, .5):
                 for a21 in np.arange(low_bnd, high_bnd, .5):

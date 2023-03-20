@@ -4,12 +4,12 @@ import numpy as np
 
 def main():
     """
-    command line arguments:
+    Command line arguments:
       1: string:  eigenvalue type,
       2: string:  phase portrait type,
       3: integer: mu,
       4: integer: relaxation time,
-      5: float: bound_val, # <= 5 for best performance
+      5: integer: bound_val, # <= 5 for best performance
       6: integer: loop_limit
     """
     if len(sys.argv) == 7:
@@ -17,7 +17,7 @@ def main():
         pp_type = sys.argv[2]
         mu_val = int(sys.argv[3])
         relax_time = int(sys.argv[4])
-        bound_val = float(sys.argv[5])
+        bound_val = int(sys.argv[5])
         loop_limit = int(sys.argv[6])
         lin_nudge_alg = LinearNudgingAlg(ev_type, pp_type, mu_val, relax_time, bound_val, loop_limit)
 

@@ -125,11 +125,12 @@ class Matrix2x2:
             print("ERROR:", pp_type, "is not a valid input.")
             quit()
 
-        # high_bnd = high_bnd + 1
-        for a11 in np.arange(low_bnd, high_bnd, .5):
-            for a12 in np.arange(low_bnd, high_bnd, .5):
-                for a21 in np.arange(low_bnd, high_bnd, .5):
-                    for a22 in np.arange(low_bnd, high_bnd, .5):
+        sample_space = np.arange(low_bnd, high_bnd + 1, 0.5)
+        
+        for a11 in sample_space:
+            for a12 in sample_space:
+                for a21 in sample_space:
+                    for a22 in sample_space:
                         temp_mtrx = np.array([[a11, a12], [a21, a22]])
                         tr = a11 + a22
                         det = (a11 * a22) - (a12 * a21)
@@ -182,12 +183,13 @@ class Matrix2x2:
 
 
     def set_matrix_ce_center(self, low_bnd, high_bnd, ev_type, pp_type):
-        #high_bnd = high_bnd + 1
-        for a11 in np.arange(low_bnd, high_bnd, .5):
-            for a12 in np.arange(low_bnd, high_bnd, .5):
-                for a21 in np.arange(low_bnd, high_bnd, .5):
-                    for a22 in np.arange(low_bnd, high_bnd, .5):
-                        temp_mtrx = np.array([[a11, a12], [a21, a22]])
+        # sample_space = np.linspace(low_bnd, high_bnd + 1, 1000000)
+        sample_space = np.arange(low_bnd, high_bnd + 1, 0.5)
+        for a11 in sample_space:
+            for a12 in sample_space:
+                for a21 in sample_space:
+                    for a22 in sample_space:
+                        #temp_mtrx = np.array([[a11, a12], [a21, a22]])
                         tr = a11 + a22
                         det = (a11 * a22) - (a12 * a21)
                         if (tr ** 2) - 4 * det < 0 and tr == 0:
@@ -199,21 +201,36 @@ class Matrix2x2:
 
 
     def set_matrix_ce_center(self, low_bnd, high_bnd, ev_type, pp_type):
-        #high_bnd = high_bnd + 1
-        for a11 in np.arange(low_bnd, high_bnd, .5):
-            for a12 in np.arange(low_bnd, high_bnd, .5):
-                for a21 in np.arange(low_bnd, high_bnd, .5):
-                    for a22 in np.arange(low_bnd, high_bnd, .5):
-                        temp_mtrx = np.array([[a11, a12], [a21, a22]])
+        # sample_space = np.linspace(low_bnd, high_bnd + 1, 1000000)
+        sample_space = np.arange(low_bnd, high_bnd + 1, 0.5)
+        for a11 in sample_space:
+            for a12 in sample_space:
+                for a21 in sample_space:
+                    for a22 in sample_space:
                         tr = a11 + a22
                         det = (a11 * a22) - (a12 * a21)
                         if (tr**2 - 4*det) < 0 and tr == 0:
                             self.set_mtrx_sample_space(temp_mtrx)
 
         random_index = random.randint(0, len(self.get_mtrx_sample_space()))
-        #print("random index", random_index)
         mtrx = self.get_mtrx_sample_space_elt(random_index)
         self.set_matrix(mtrx)
+
+
+    # def set_matrix_ce_center(self, low_bnd, high_bnd, ev_type, pp_type):
+    #     sample_space = np.arange(low_bnd, high_bnd + 1, 0.1)
+    #
+    #     A = np.meshgrid(sample_space, sample_space, sample_space, sample_space)
+    #     a11, a12, a21, a22 = A
+    #     tr = a11 + a22
+    #     det = a11 * a22 - a12 * a21
+    #
+    #     valid_indices = (tr**2 - 4*det < 0) & (tr == 0)
+    #     valid_mtrx = [(a11[i], a12[i], a21[i], a22[i]) for i in np.where(valid_indices)[0]]
+    #     print(valid_mtrx)
+    #
+    #     mtrx = random.choice(valid_mtrx)
+    #     self.set_matrix(mtrx)
 
 
     def print_ev_pp_dvdr(self, ev_type, pp_type):

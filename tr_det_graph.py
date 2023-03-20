@@ -91,7 +91,7 @@ class TrDetGraph:
             data_was_plotted = True
 
         else:
-            print(a21_str, a21, a22_str, a22)
+            print(a21_str + ":", a21, a22_str + ":", a22)
             print("This matrix is not plottable.", "\n")
             data_was_plotted = False
 

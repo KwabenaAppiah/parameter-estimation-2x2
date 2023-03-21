@@ -1,7 +1,7 @@
 import math
 import random
+import itertools
 import numpy as np
-
 
 class Matrix2x2:
     def __init__(self, low_bnd, high_bnd, ev_type, pp_type):
@@ -118,30 +118,29 @@ class Matrix2x2:
                 ev_1, ev_2 = self.get_eignevals(mtrx)
 
 
-
     def set_matrix_re(self, low_bnd, high_bnd, ev_type, pp_type):
 
         if pp_type != "sink" and pp_type != "source":
             print("ERROR:", pp_type, "is not a valid input.")
             quit()
 
-        sample_space = np.arange(low_bnd, high_bnd + 1, 0.5)
-        
-        for a11 in sample_space:
-            for a12 in sample_space:
-                for a21 in sample_space:
-                    for a22 in sample_space:
-                        temp_mtrx = np.array([[a11, a12], [a21, a22]])
-                        tr = a11 + a22
-                        det = (a11 * a22) - (a12 * a21)
+        sample_space = np.linspace(low_bnd, high_bnd, num = (high_bnd - low_bnd + 1) * 2)
+        samples = itertools.product(sample_space, repeat = 4)
 
-                        if pp_type == "sink" and (tr**2 - 4*det) == 0 and tr < 0:
-                            self.set_mtrx_sample_space(temp_mtrx)
+        for a11, a12, a21, a22 in samples:
+            tr = a11 + a22
+            det = (a11 * a22) - (a12 * a21)
 
-                        elif pp_type == "source" and (tr**2 - 4*det) == 0 and tr > 0:
-                            self.set_mtrx_sample_space(temp_mtrx)
+            if pp_type == "sink" and (tr ** 2 - 4 * det) == 0 and tr < 0:
+                temp_mtrx = np.array([[a11, a12], [a21, a22]])
+                self.set_mtrx_sample_space(temp_mtrx)
 
-        random_index = random.randint(0, len(self.get_mtrx_sample_space()))
+            elif pp_type == "source" and (tr ** 2 - 4 * det) == 0 and tr > 0:
+                temp_mtrx = np.array([[a11, a12], [a21, a22]])
+                self.set_mtrx_sample_space(temp_mtrx)
+
+        max_index = len(self.get_mtrx_sample_space()) -1
+        random_index = random.randint(0, max_index)
         mtrx = self.get_mtrx_sample_space_elt(random_index)
         self.set_matrix(mtrx)
 
@@ -183,36 +182,38 @@ class Matrix2x2:
 
 
     def set_matrix_ce_center(self, low_bnd, high_bnd, ev_type, pp_type):
-        # sample_space = np.linspace(low_bnd, high_bnd + 1, 1000000)
-        sample_space = np.arange(low_bnd, high_bnd + 1, 0.5)
-        for a11 in sample_space:
-            for a12 in sample_space:
-                for a21 in sample_space:
-                    for a22 in sample_space:
-                        temp_mtrx = np.array([[a11, a12], [a21, a22]])
-                        tr = a11 + a22
-                        det = (a11 * a22) - (a12 * a21)
-                        if (tr ** 2) - 4 * det < 0 and tr == 0:
-                            self.set_mtrx_sample_space(temp_mtrx)
+        sample_space = np.linspace(low_bnd, high_bnd, num = (high_bnd - low_bnd + 1) * 2)
+        samples = itertools.product(sample_space, repeat = 4)
 
-        random_index = random.randint(0, len(self.get_mtrx_sample_space()))
+        for a11, a12, a21, a22 in samples:
+            tr = a11 + a22
+            det = (a11 * a22) - (a12 * a21)
+            if (tr ** 2) - 4 * det < 0 and tr == 0:
+                temp_mtrx = np.array([[a11, a12], [a21, a22]])
+                self.set_mtrx_sample_space(temp_mtrx)
+
+        max_index = len(self.get_mtrx_sample_space()) - 1
+        random_index = random.randint(0, max_index)
         mtrx = self.get_mtrx_sample_space_elt(random_index)
         self.set_matrix(mtrx)
 
-        
+
     # def set_matrix_ce_center(self, low_bnd, high_bnd, ev_type, pp_type):
-    #     sample_space = np.arange(low_bnd, high_bnd + 1, 0.1)
     #
-    #     A = np.meshgrid(sample_space, sample_space, sample_space, sample_space)
-    #     a11, a12, a21, a22 = A
-    #     tr = a11 + a22
-    #     det = a11 * a22 - a12 * a21
+    #     sample_space = np.arange(low_bnd, high_bnd + 1, 0.5)
+    #     for a11 in sample_space:
+    #         for a12 in sample_space:
+    #             for a21 in sample_space:
+    #                 for a22 in sample_space:
+    #                     tr = a11 + a22
+    #                     det = (a11 * a22) - (a12 * a21)
+    #                     if (tr ** 2) - 4 * det < 0 and tr == 0:
+    #                         temp_mtrx = np.array([[a11, a12], [a21, a22]])
+    #                         self.set_mtrx_sample_space(temp_mtrx)
     #
-    #     valid_indices = (tr**2 - 4*det < 0) & (tr == 0)
-    #     valid_mtrx = [(a11[i], a12[i], a21[i], a22[i]) for i in np.where(valid_indices)[0]]
-    #     print(valid_mtrx)
-    #
-    #     mtrx = random.choice(valid_mtrx)
+    #     max_index = len(self.get_mtrx_sample_space()) - 1
+    #     random_index = random.randint(0, max_index)
+    #     mtrx = self.get_mtrx_sample_space_elt(random_index)
     #     self.set_matrix(mtrx)
 
 

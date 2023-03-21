@@ -5,12 +5,12 @@ import numpy as np
 def main():
     """
     Command line arguments:
-      1: string:  eigenvalue type,
-      2: string:  phase portrait type,
-      3: integer: mu,
-      4: integer: relaxation time,
-      5: integer: bound_val, # <= 5 for best performance
-      6: integer: loop_limit
+      1: String:  Eigenvalue type,
+      2: String:  Phase portrait type,
+      3: Integer: Mu,
+      4: Integer: Relaxation time,
+      5: Integer: Bound values,
+      6: Integer: Loop limit
     """
     if len(sys.argv) == 7:
         ev_type = sys.argv[1]

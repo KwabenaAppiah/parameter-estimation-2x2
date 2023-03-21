@@ -144,7 +144,7 @@ class TrDetGraph:
 
         ax.legend(handles=custom_handles, loc="best", bbox_to_anchor=(1, 0.5))
         ev_pp_type = self.get_ev_type() + "_" + self.get_pp_type()
-        filename = "tr_dt_graph" + "_" + ev_pp_type + "_" + str(loop_limit) + "_" + "cc"
+        filename = "tr_det_graph" + "_" + ev_pp_type + "_" + str(loop_limit) + "_" + "cc"
         subdir = "../output/" + ev_pp_type + "_" + self.get_date_str() + "/"
         os.makedirs(subdir, exist_ok=True)
         fig.savefig(subdir + filename + ".png", dpi=300)

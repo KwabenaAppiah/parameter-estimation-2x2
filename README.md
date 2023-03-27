@@ -21,12 +21,12 @@ HOW DO I RUN THIS SCRIPT?
 There are two command line prompt options:
 
 Option 1: 
-python parameter_estimation.py EV_TYPE PP_TYPE MU_VAL RLX_TIME BND_VAL LOOP_LIM
-python parameter_estimation.py rde sink 100 10 12 10 (Sample prompt)
+- python parameter_estimation.py EV_TYPE PP_TYPE MU_VAL RLX_TIME BND_VAL LOOP_LIM
+- python parameter_estimation.py rde sink 100 10 12 10 (sample prompt)
 
 Option 2: 
-python parameter_estimation.py MU_VAL RLX_TIME FILE_IMPORT
-python parameter_estimation.py 100 10 ../import/ce_sp_sink_all_matrices.txt (Sample prompt)
+- python parameter_estimation.py MU_VAL RLX_TIME FILE_IMPORT
+- python parameter_estimation.py 100 10 ../import/ce_sp_sink_all_matrices.txt (sample prompt)
 
 
 EV_TYPE (eigenvalue type) and PP_TYPE (phase portrait type):

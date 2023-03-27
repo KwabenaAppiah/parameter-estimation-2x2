@@ -18,12 +18,16 @@ and its predecessor, please check here: https://github.com/taylorbn/linear_nudgi
 
 HOW DO I RUN THIS SCRIPT?
 
-SAMPLE COMMAND LINE PROMPTS:
-- python parameter_estimation.py rde saddle 100 10 5 30
-- python parameter_estimation.py ce sp_sink 90 10 7 25 
+There are two command line prompt options:
 
-CONTEXT: 
-- python parameter_estimation.py EV_TYPE PP_TYPE MU_VAL RLX_TIME BND_VAL LOOP_LIM
+Option 1: 
+python parameter_estimation.py EV_TYPE PP_TYPE MU_VAL RLX_TIME BND_VAL LOOP_LIM
+python parameter_estimation.py rde sink 100 10 12 10 (Sample prompt)
+
+Option 2: 
+python parameter_estimation.py MU_VAL RLX_TIME FILE_IMPORT
+python parameter_estimation.py 100 10 ../import/ce_sp_sink_all_matrices.txt (Sample prompt)
+
 
 EV_TYPE (eigenvalue type) and PP_TYPE (phase portrait type):
 
@@ -63,6 +67,9 @@ Thus, as of now, a bound value of 5 is recommended for testing purposes.
 LOOP_LIM: 
 - The total number of randomly generated matrices of which the nudging algorithm will be applied to.
 
+FILE_IMPORT
+- An imported text file that contains a list of matrices and their average relative parameter error.
+
 
 --------------------------------------------------------------------------------------------------
 
@@ -78,9 +85,17 @@ Please note, the filenames may change depending on the eigenvalue and phase port
 Moreover, the color of these dots are representative of each matrix’s average relative error. Currently, this is the only
 graphic that visualizes all of the matrices generated.
 
-2. bad_matricies.txt
+2a. all_matricies.txt
 
-- A list of “bad matricies” above a certain average relative error threshold.
+- A complete list of randomly generated matricies irregardless of their average relative error threshold. 
+
+2b. bad_matricies.txt
+
+- A list of "bad matricies" below a certain average relative error threshold.
+
+2c. good_matricies.txt
+
+- A list of "good matricies" above a certain average relative error threshold.
 
 3. line_graph_indv.png
 
@@ -92,4 +107,4 @@ graphic that visualizes all of the matrices generated.
 found here should mirror that of the content found in bad_matricies.txt.
 
 
-Updated 2023.03.13 - 04:18
+Updated 2023.03.26 - 23:53

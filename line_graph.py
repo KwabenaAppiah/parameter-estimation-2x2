@@ -15,6 +15,7 @@ class LineGraph:
         # FOR COMP ONLY
         self._true_vals = []
         self._bad_matrices_exist = False
+        self._is_there_a_plottable_mtrx = False
         self.set_subplots_comp()
 
     # INDV AND COMP GETTERS
@@ -32,6 +33,9 @@ class LineGraph:
         date_str = str(raw_date.year) + "."+ str(time.strftime("%m"))+ "." + str(time.strftime("%d"))
         return date_str
 
+    # def is_there_a_plottable_mtrx(self):
+    #     return self._is_there_a_plottable_mtrx
+
     # COMP GETTERS ONLY
     def get_subplots_comp(self):
         return self._fig, self._ax
@@ -41,6 +45,7 @@ class LineGraph:
 
     def has_bad_matrices_comp(self):
         return self._bad_matrices_exist
+
 
     # COMP SETTERS
     def set_has_bad_matrices_comp(self, bool):
@@ -58,13 +63,17 @@ class LineGraph:
         self._ax.set_ylabel("Avg. Rel. Errors")
         self._fig.set_size_inches(16, 8)
 
+    # def set_is_there_a_plottable_mtrx(self, bool):
+    #     self._is_there_a_plottable_mtrx = bool
 
-    def init(self, guesses, true_vals, cycle_num):
+
+    def init(self, guesses, true_vals, cycle_num, set_boundry_val):
         a11s, a12s, a21s, a22s = guesses
         a11, a12, a21, a22 = true_vals
         total_err_steps = []
         a21_rel_err = []
         a22_rel_err = []
+        #is_there_a_plottable_mtrx = False
 
         if a21 != 0 and a22 != 0:
             for i in range(len(a21s)):
@@ -77,11 +86,26 @@ class LineGraph:
             a22_nth_rel_err = abs(a22s[-1] - a22) / abs(a22)
             a21_a22_nth_avg_rel_err = abs(a21_nth_rel_err + a22_nth_rel_err) / 2
 
-            if a21_a22_nth_avg_rel_err > 1e-3:
+
+            # if self.is_there_a_plottable_mtrx() == True:  # all matricies
+            #     print("YES!")
+            #     self.write_to_file("mtrx_" + str(cycle_num) + "|" + str(a21_a22_nth_avg_rel_err) + "|" + str(true_vals), "all")
+            #     return True
+
+
+            if a21_a22_nth_avg_rel_err >= set_boundry_val: # bad matricies
                 self.display_indv(true_vals, cycle_num, total_err_steps)
-                self.write_to_file("Mtrx. " + str(cycle_num) + ": " + str(true_vals), "Avg. Err.: " + str(a21_a22_nth_avg_rel_err))
+                self.write_to_file("mtrx_" + str(cycle_num) + "|" + str(a21_a22_nth_avg_rel_err) + "|" + str(true_vals), "bad")
+                self.write_to_file("mtrx_" + str(cycle_num) + "|" + str(a21_a22_nth_avg_rel_err) + "|" + str(true_vals), "all")
                 self.plot_graph_comp(cycle_num, total_err_steps)
                 self.set_has_bad_matrices_comp(True)
+                # self.set_is_there_a_plottable_mtrx(True)
+                return True
+
+            elif a21_a22_nth_avg_rel_err < set_boundry_val: # good matricies
+                self.write_to_file("mtrx_" + str(cycle_num) + "|" + str(a21_a22_nth_avg_rel_err) + "|" + str(true_vals), "good")
+                self.write_to_file("mtrx_" + str(cycle_num) + "|" + str(a21_a22_nth_avg_rel_err) + "|" + str(true_vals), "all")
+                # self.set_is_there_a_plottable_mtrx(True)
                 return True
 
             else:
@@ -95,11 +119,11 @@ class LineGraph:
         ax.plot(list(range(len(total_err_steps))), total_err_steps, label = "MX" + " " + str(cycle_num))
 
 
-    def write_to_file(self, str_1, str_2):
-        output = str_1 + "\n" + str_2 + "\n" + "\n"
+    def write_to_file(self, line_str, mtrx_file_type):
+        output = line_str + "\n" + "\n"
         ev_pp_type = self.get_ev_type() + "_" + self.get_pp_type()
-        filename = "bad_matrices" + "_" + ev_pp_type + ".txt"
-        subdir = "../output/" + ev_pp_type + "_" + self.get_date_str() + "/"
+        filename = ev_pp_type + "_" + mtrx_file_type + "_matrices.txt"
+        subdir = "../output/" + ev_pp_type + "_" + self.get_date_str() + "/txt_files/"
         os.makedirs(subdir, exist_ok = True)
         f = open(subdir + filename, "a")
         f.write(output)

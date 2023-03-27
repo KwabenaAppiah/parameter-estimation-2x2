@@ -8,16 +8,29 @@ from scipy.integrate import solve_ivp
 
 # lorenz nudge, project-specific
 from tr_det_graph import TrDetGraph
-# from line_graph_indv import LineGraphIndv
-# from line_graph_comp import LineGraphComp
 from line_graph import LineGraph
 from matrix_2x2 import Matrix2x2
 
 class LinearNudgingAlg:
-    def __init__(self, ev_type, pp_type, mu_val, relax_time, bnd_val, loop_limit):
-        low_bnd, high_bnd = -bnd_val, bnd_val
-        self.set_rule(2)
+    def __init__(self, *args):
+        ev_type, pp_type, mu_val, relax_time = args[0], args[1], args[2], args[3]
+        mtrx_list = []
 
+        # has_5_args = has_6_args = False
+        has_5_args = False
+        if len(args) == 5:
+            file_import = args[4]
+            mtrx_list = self.text_file_to_mtrx_list(file_import)
+            loop_limit = len(mtrx_list)
+            has_5_args = True
+
+        else:
+        # if len(args) == 6:
+            bound_val = args[4]
+            loop_limit = args[5]
+            low_bnd, high_bnd = -bound_val, bound_val
+
+        self.set_rule(2)
         # ------------ Algorithm parameters ----------------
         # Nudging parameters
         # NOTE: Full nudging matrix not advised. Diagonal entries seem to work best but
@@ -28,107 +41,126 @@ class LinearNudgingAlg:
 
         # Position, velocity thresholds for updates
         # NOTE: Right now we are not using any thresholds, they are all set to infinity
-        #       with no decay
+        #      with no decay
         u_thold    = np.inf
         v_thold    = np.inf
         ut_thold   = np.inf
         vt_thold   = np.inf
         d          = 10         # Threshold decay factor
         step_val   = 10         # The step value for a22 and a21
-        tr_det_graph = TrDetGraph(ev_type, pp_type, loop_limit)
-        # line_graph_indv = LineGraphIndv(ev_type, pp_type)
-        # line_graph_comp = LineGraphComp(ev_type, pp_type)
+        tr_det_graph = TrDetGraph(ev_type, pp_type, loop_limit, mu_val)
         line_graph = LineGraph(ev_type, pp_type)
-
 
         print("**********************************************", "START - SIMULATION" ,"***************************************************", '\n')
         i = 0
         gui_counter = i + 1
+
         while i < loop_limit:
             while i != loop_limit:
-                mtrx = Matrix2x2(low_bnd, high_bnd, ev_type, pp_type)
-                # print(mtrx)
 
-                if mtrx.get_element(1, 0) == 0 and mtrx.get_element(1, 1) == 0:
-                # if False:
-                     print("CYCLE:", gui_counter, " - SKIP ITERATION", 1)
-                     break
+                print("**********************************", "CYCLE:", gui_counter, "/" , loop_limit, "*************************************************************************", '\n')
+                print(ev_type.upper(), "-", pp_type.upper())
+
+                if has_5_args == True:
+                    a11, a12, a21, a22 = mtrx_list[i][0][0], mtrx_list[i][0][1], mtrx_list[i][1][0], mtrx_list[i][1][1]
 
                 else:
-                    print("**********************************", "CYCLE:", gui_counter, "/" , loop_limit, "*************************************************************************", '\n')
-                    print(ev_type.upper(), "-", pp_type.upper())
+                    mtrx = Matrix2x2(low_bnd, high_bnd, ev_type, pp_type)
                     a11, a12, a21, a22 = mtrx.get_element(0, 0), mtrx.get_element(0, 1), mtrx.get_element(1, 0), mtrx.get_element(1, 1)
-                    # a11, a12, a21, a22 = mtrx.get_each_elt()
-                    # #print(a11, a12, a21, a22)
-                    true_vals = np.array([a11, a12, a21, a22])
 
-                    # NOTE: Code is set up to only update parameters with guesses different from
-                    #       the true value. This needs to be toggled within the script now but could
-                    #       be implemented from the command line if you wanted
-                    a11_0         = a11
-                    a12_0         = a12
-                    a21_0         = a21 + step_val
-                    a22_0         = a22 + step_val
-                    initial_guesses = np.array([a11_0, a12_0, a21_0, a22_0])
-                    updates_to_plot = list(true_vals != initial_guesses)
-                    updates_on      = true_vals != initial_guesses
+                true_vals = np.array([a11, a12, a21, a22])
 
-                    # ------------ Algorithm parameters ---------------- (Moved out of loop)
+                # NOTE: Code is set up to only update parameters with guesses different from
+                #       the true value. This needs to be toggled within the script now but could
+                #       be implemented from the command line if you wanted
+                a11_0         = a11
+                a12_0         = a12
+                a21_0         = a21 + step_val
+                a22_0         = a22 + step_val
+                initial_guesses = np.array([a11_0, a12_0, a21_0, a22_0])
+                updates_to_plot = list(true_vals != initial_guesses)
+                updates_on      = true_vals != initial_guesses
 
-                    # relax_timeation period (time to wait between updates)
-                    time_between = np.array([relax_time] * 4)
+                # ------------ Algorithm parameters ---------------- (Moved out of loop)
 
-                    # Position, velocity thresholds for updates  --- (Moved out of loop)
+                # relax_timeation period (time to wait between updates)
+                time_between = np.array([relax_time] * 4)
 
-                    # Package mus, parms, thresholds for use in solve_ivp()
-                    mus = np.array([mu_1, mu_2, mu_3, mu_4])
-                    parms = np.array([a11, a12, a21, a22, a11_0, a12_0, a21_0, a22_0], dtype = np.float64)
-                    thresholds = np.array([u_thold, v_thold, ut_thold, vt_thold, d])
+                # Position, velocity thresholds for updates  --- (Moved out of loop)
 
-                    # ------------ Simulation parameters ----------------
-                    sim_time = 100 # Stopping time
-                    # dt = 0.0001  # Timestep
-                    self.set_dt(0.0001)
-                    t_span = [0, sim_time]
-                    t = np.arange(0, sim_time, self.get_dt())
+                # Package mus, parms, thresholds for use in solve_ivp()
+                mus = np.array([mu_1, mu_2, mu_3, mu_4])
+                parms = np.array([a11, a12, a21, a22, a11_0, a12_0, a21_0, a22_0], dtype = np.float64)
+                thresholds = np.array([u_thold, v_thold, ut_thold, vt_thold, d])
 
-                    # ------------ Initialize system --------------------
-                    S0 = np.array([1, 1, 3, 3])                 # Initialize [x, y, xt, yt]
-                    guesses = [[a11_0],[a12_0],[a21_0],[a22_0]]  # Guesses
+                # ------------ Simulation parameters ----------------
+                sim_time = 100 # Stopping time
+                # dt = 0.0001  # Timestep
+                self.set_dt(0.0001)
+                t_span = [0, sim_time]
+                t = np.arange(0, sim_time, self.get_dt())
 
-                    try:
-                        r1, r2, r3, r4 = self.calc_rhs(S0, mus, parms)
-                        derivs = [[r1, r2, r3, r4]]
-                        err = [[abs(S0[2] - S0[0]), abs(S0[3] - S0[1])]]   # Position error
-                        last_updates     = np.array([0,0,0,0])             # Time of last updates
-                        self.set_idx_last_updates(np.array([0,0,0,0]))     # Index of last updates
-                        self.set_tfe([])                                   # To record times when model() is called
+                # ------------ Initialize system --------------------
+                S0 = np.array([1, 1, 3, 3])                 # Initialize [x, y, xt, yt]
+                guesses = [[a11_0],[a12_0],[a21_0],[a22_0]]  # Guesses
 
-                        # Package into time_tracker arg for solve_ivp()
-                        time_tracker = [last_updates, time_between, self.get_tfe()]
-                        args = (mus, parms, thresholds, derivs, guesses, time_tracker, updates_on, err, self.get_idx_last_updates())
-                        sol, guesses, derivs = self.run_simulation(t_span, S0, t, true_vals, args)
+                try:
+                    r1, r2, r3, r4 = self.calc_rhs(S0, mus, parms)
+                    derivs = [[r1, r2, r3, r4]]
+                    err = [[abs(S0[2] - S0[0]), abs(S0[3] - S0[1])]]   # Position error
+                    last_updates     = np.array([0,0,0,0])             # Time of last updates
+                    self.set_idx_last_updates(np.array([0,0,0,0]))     # Index of last updates
+                    self.set_tfe([])                                   # To record times when model() is called
 
-                        line_graph.init(guesses, true_vals, i)
-                        tr_det_graph_plotted = tr_det_graph.organize_data(guesses, true_vals)
+                    # Package into time_tracker arg for solve_ivp()
+                    time_tracker = [last_updates, time_between, self.get_tfe()]
+                    _args = (mus, parms, thresholds, derivs, guesses, time_tracker, updates_on, err, self.get_idx_last_updates())
+                    sol, guesses, derivs = self.run_simulation(t_span, S0, t, true_vals, _args)
+                    line_graph.init(guesses, true_vals, i, 1e-5)
+                    is_tr_det_graph_plotted = tr_det_graph.organize_data(guesses, true_vals)
 
-                        if tr_det_graph_plotted  != False:
-                            i += 1
-                            gui_counter += 1
-                        else:
-                            print('\n', mtrx, '\n' + '\n', 'UNUSABLE MTRX', "\n")
-                            print("CYCLE:", gui_counter, "- SKIP THIS ITERATION.")
-                            break
-
-                    except ValueError:
+                    if is_tr_det_graph_plotted  != False:
+                        i += 1
+                        gui_counter += 1
+                    else:
                         print('\n', mtrx, '\n' + '\n', 'UNUSABLE MTRX', "\n")
                         print("CYCLE:", gui_counter, "- SKIP THIS ITERATION.")
                         break
+
+                except ValueError:
+                    print('\n', mtrx, '\n' + '\n', 'UNUSABLE MTRX', "\n")
+                    print("CYCLE:", gui_counter, "- SKIP THIS ITERATION.")
+                    break
 
         print("**********************************************","END - SIMULATION" ,"***************************************************", '\n')
         line_graph.display_comp()
         tr_det_graph.display(ev_type, pp_type, loop_limit)
         plt.show()
+
+
+    def text_file_to_mtrx_list(self, imported_file):
+        mtrx_list = []
+        with open(imported_file, 'r') as file:
+            for line in file:
+                line = line.strip()  # removes any leading or trailing white space
+                if line:  # only processes lines with text (not just white space)
+                    str = line.strip()
+                    vars = str.split("[")[1].split("]")[0]
+                    mtrx_elts = vars.split()
+                    a11, a12, a21, a22 = mtrx_elts
+                    temp_mtrx = np.array([[float(a11), float(a12)], [float(a21), float(a22)]])
+                    mtrx_list.append(temp_mtrx)
+        return mtrx_list
+
+    # Not needed
+    # def get_total_text_lines(self, text_file_path):
+    #     line_count = 0
+    #     with open(text_file_path, 'r') as file:
+    #         for line in file:
+    #             if line.strip():
+    #                 line_count += 1
+    #     return line_count
+
 
     # GETTERS
     def get_dt(self):
@@ -163,6 +195,7 @@ class LinearNudgingAlg:
     def set_rule(self, rule_to_use):
         # rules = {0: 'constant', 1: 'exact', 2: 'drop_deriv'}
         self._rule = self.rule_string(rule_to_use)
+
 
 
     def calc_rhs(self, S, mus, parms):
@@ -340,8 +373,6 @@ class LinearNudgingAlg:
         to_update  = np.logical_and(time_threshold, updates_on)
 
         update_idx = [i for i, x in enumerate(to_update) if x]
-        # update_parms(update_idx, S, mus, parms, guesses, thresholds, rule, time_tracker, pos_err, self.idx_last_updates)
-        #self.update_parms(update_idx, S, mus, parms, guesses, thresholds, 'drop_deriv', time_tracker, pos_err, self.get_idx_last_updates())
         self.update_parms(update_idx, S, mus, parms, guesses, thresholds, self.get_rule(), time_tracker, pos_err, self.get_idx_last_updates())
         no_update_idx = [i for i, x in enumerate(to_update) if not x]
 

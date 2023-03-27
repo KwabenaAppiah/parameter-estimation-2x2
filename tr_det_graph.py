@@ -8,11 +8,11 @@ import numpy as np
 
 
 class TrDetGraph:
-    def __init__(self, ev_type, pp_type, loop_limit):
+    def __init__(self, ev_type, pp_type, loop_limit, mu_val):
         self._ev_type = ev_type
         self._pp_type = pp_type
         self._max_trace = 0
-        self.set_subplots(loop_limit)
+        self.set_subplots(loop_limit, mu_val)
 
     def get_ev_type(self):
         return self._ev_type
@@ -39,11 +39,12 @@ class TrDetGraph:
         # else:
         #  print("Max trace is unchanged:", self._max_trace)
 
-    def set_subplots(self, loop_limit):
+    def set_subplots(self, loop_limit, mu_val):
         self._fig, self._ax = plt.subplots()
-        cycles_abrev = "cc"
+        # cycles_abrev = "cc"
+        mu_formatted = str("{:.0e}".format(mu_val))
 
-        title = self.get_ev_type().upper() + " | " + self.get_pp_type().upper() + " - " + str(loop_limit) + " " + cycles_abrev.upper()
+        title = self.get_ev_type().upper() + " | " + self.get_pp_type().upper() + " - " + str(loop_limit) + " cc | µ: " + mu_formatted
         self._ax.set_title(label=title, pad=20)
         self._ax.set_xlabel("Tr", loc="right")
         self._ax.set_ylabel("Det", loc="top")
@@ -135,10 +136,10 @@ class TrDetGraph:
         self.graph_parabola()
 
         custom_handles = [
-            Line2D([0],[0], marker="o", markerfacecolor="r", color="w", alpha=1, markersize=7, label="$μ_{Err}$ > 1e-1"),
-            Line2D([0],[0], marker="o", markerfacecolor="r", color="w", alpha=0.3, markersize=7, label="$μ_{Err}$ > 1e-3"),
-            Line2D([0], [0], marker="o", markerfacecolor="#800080", color="w", alpha=0.3, markersize=7, label="$μ_{Err}$ > 1e-5"),
-            Line2D([0],[0], marker="o", markerfacecolor="b", color="w", alpha=0.3, markersize=7, label="$μ_{Err}$ > 1e-8"),
+            Line2D([0],[0], marker="o", markerfacecolor="r", color="w", alpha=1, markersize=7, label="$x̄_{Err}$ > 1e-1"),
+            Line2D([0],[0], marker="o", markerfacecolor="r", color="w", alpha=0.3, markersize=7, label="$x̄_{Err}$ > 1e-3"),
+            Line2D([0], [0], marker="o", markerfacecolor="#800080", color="w", alpha=0.3, markersize=7, label="$x̄_{Err}$ > 1e-5"),
+            Line2D([0],[0], marker="o", markerfacecolor="b", color="w", alpha=0.3, markersize=7, label="$x̄_{Err}$ > 1e-8"),
             Line2D([0],[0], marker="o", markerfacecolor="b", color="w", markersize=7, label="Below 1e-8"),
             Line2D([0], [0], color="orange", alpha=1, lw=3, label="T\N{SUPERSCRIPT TWO} - 4D = 0")]
 

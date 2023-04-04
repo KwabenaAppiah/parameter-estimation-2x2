@@ -81,10 +81,8 @@ class SolGraph:
         true_vals_str = "[" + a11_str +", " + a12_str + ", "+ a21_str +", " + a22_str + "]"
         title = ev_type.upper()+ " | " + pp_type.upper() + " - MTRX " + str(cycle_num) + " : " + true_vals_str
         ax.set_title(label = title, pad = 20)
-
         ax.set_xlabel("T", loc = "right")
         ax.set_ylabel("Y", loc = "top")
-        ax.set_xscale("log")
         ax.set_yscale("log")
 
         # Output IMG files

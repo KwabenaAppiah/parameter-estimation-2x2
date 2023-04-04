@@ -56,7 +56,8 @@ class LineGraph:
     def set_subplots_comp(self):
         true_vals, ev_type, pp_type = self.get_true_vals_comp(), self.get_ev_type(), self.get_pp_type()
         self._fig, self._ax = plt.subplots()
-        title = ev_type.upper() + " | " + pp_type.upper() + " - Matrices w/ an Avg. Err. > 1e-3"
+        title = ev_type.upper() + " | " + pp_type.upper() + " - Matrices w/ an Avg. Err. > 1e-5"
+
         self._ax.set_yscale('log')
         self._ax.set_title(label = title, pad = 25)
         self._ax.set_xlabel("Iterations")

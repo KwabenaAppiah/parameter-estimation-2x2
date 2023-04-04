@@ -53,7 +53,7 @@ class LinearNudgingAlg:
         step_val   = 10         # The step value for a22 and a21
         tr_det_graph = TrDetGraph(ev_type, pp_type, loop_limit, mu_val)
         line_graph = LineGraph(ev_type, pp_type)
-        sol_graph = SolGraph(ev_type, pp_type)
+        #sol_graph = SolGraph(ev_type, pp_type)
 
         print("**********************************************", "START - SIMULATION" ,"***************************************************", '\n')
         i = 0
@@ -125,12 +125,11 @@ class LinearNudgingAlg:
                     sol, guesses, derivs = self.run_simulation(t_span, S0, t, true_vals, _args)
 
                     #Display
-
                     is_tr_det_graph_plotted = tr_det_graph.organize_data(guesses, true_vals)
 
                     if is_tr_det_graph_plotted  != False:
                         line_graph.init(guesses, true_vals, i, 1e-5)
-                        # sol_graph.init(sol, guesses, true_vals, i, 1e-5)
+                        #sol_graph.init(sol, guesses, true_vals, i, 1e-5)
                         i += 1
                         gui_counter += 1
                     else:

@@ -10,11 +10,13 @@ from scipy.integrate import solve_ivp
 from tr_det_graph import TrDetGraph
 from line_graph import LineGraph
 from matrix_2x2 import Matrix2x2
+from sol_graph import SolGraph
 
 class LinearNudgingAlg:
     def __init__(self, *args):
         ev_type, pp_type, mu_val, relax_time = args[0], args[1], args[2], args[3]
         mtrx_list = []
+        self.set_mu_value(mu_val)
 
         # has_5_args = has_6_args = False
         has_5_args = False
@@ -36,7 +38,8 @@ class LinearNudgingAlg:
         # NOTE: Full nudging matrix not advised. Diagonal entries seem to work best but
         #       could play around with off diagonal entries. I typically use multiple of
         #       identity matrix
-        mu_1 = mu_4 = mu_val
+        # mu_1 = mu_4 = mu_val
+        mu_1 = mu_4 = self.get_mu_value()
         mu_2 = mu_3 = 0
 
         # Position, velocity thresholds for updates
@@ -50,6 +53,7 @@ class LinearNudgingAlg:
         step_val   = 10         # The step value for a22 and a21
         tr_det_graph = TrDetGraph(ev_type, pp_type, loop_limit, mu_val)
         line_graph = LineGraph(ev_type, pp_type)
+        sol_graph = SolGraph(ev_type, pp_type)
 
         print("**********************************************", "START - SIMULATION" ,"***************************************************", '\n')
         i = 0
@@ -63,6 +67,7 @@ class LinearNudgingAlg:
 
                 if has_5_args == True:
                     a11, a12, a21, a22 = mtrx_list[i][0][0], mtrx_list[i][0][1], mtrx_list[i][1][0], mtrx_list[i][1][1]
+                    mtrx = np.array([[a11, a12], [a21, a22]])
 
                 else:
                     mtrx = Matrix2x2(low_bnd, high_bnd, ev_type, pp_type)
@@ -96,9 +101,11 @@ class LinearNudgingAlg:
                 # ------------ Simulation parameters ----------------
                 sim_time = 100 # Stopping time
                 # dt = 0.0001  # Timestep
-                self.set_dt(0.0001)
+                # self.set_dt(0.0001)
+                self.set_dt(1/2 * (1 / self.get_mu_value()))
                 t_span = [0, sim_time]
                 t = np.arange(0, sim_time, self.get_dt())
+
 
                 # ------------ Initialize system --------------------
                 S0 = np.array([1, 1, 3, 3])                 # Initialize [x, y, xt, yt]
@@ -116,20 +123,24 @@ class LinearNudgingAlg:
                     time_tracker = [last_updates, time_between, self.get_tfe()]
                     _args = (mus, parms, thresholds, derivs, guesses, time_tracker, updates_on, err, self.get_idx_last_updates())
                     sol, guesses, derivs = self.run_simulation(t_span, S0, t, true_vals, _args)
-                    line_graph.init(guesses, true_vals, i, 1e-5)
+
+                    #Display
+
                     is_tr_det_graph_plotted = tr_det_graph.organize_data(guesses, true_vals)
 
                     if is_tr_det_graph_plotted  != False:
+                        line_graph.init(guesses, true_vals, i, 1e-5)
+                        # sol_graph.init(sol, guesses, true_vals, i, 1e-5)
                         i += 1
                         gui_counter += 1
                     else:
                         print('\n', mtrx, '\n' + '\n', 'UNUSABLE MTRX', "\n")
-                        print("CYCLE:", gui_counter, "- SKIP THIS ITERATION.")
+                        print("CYCLE:", gui_counter, "- SKIP THIS ITERATION (1).")
                         break
 
                 except ValueError:
                     print('\n', mtrx, '\n' + '\n', 'UNUSABLE MTRX', "\n")
-                    print("CYCLE:", gui_counter, "- SKIP THIS ITERATION.")
+                    print("CYCLE:", gui_counter, "- SKIP THIS ITERATION (2).")
                     break
 
         print("**********************************************","END - SIMULATION" ,"***************************************************", '\n')
@@ -138,182 +149,43 @@ class LinearNudgingAlg:
         plt.show()
 
 
-    def text_file_to_mtrx_list(self, imported_file):
-        mtrx_list = []
-        with open(imported_file, 'r') as file:
-            for line in file:
-                line = line.strip()  # removes any leading or trailing white space
-                if line:  # only processes lines with text (not just white space)
-                    str = line.strip()
-                    vars = str.split("[")[1].split("]")[0]
-                    mtrx_elts = vars.split()
-                    a11, a12, a21, a22 = mtrx_elts
-                    temp_mtrx = np.array([[float(a11), float(a12)], [float(a21), float(a22)]])
-                    mtrx_list.append(temp_mtrx)
-        return mtrx_list
+    #2
+    def run_simulation(self, t_span, S0, t, true_vals, args):
+        mus, parms, thresholds, derivs, guesses, time_tracker, updates_on, err, idx_temp = args
+        self.set_idx_last_updates(idx_temp)
 
-    # Not needed
-    # def get_total_text_lines(self, text_file_path):
-    #     line_count = 0
-    #     with open(text_file_path, 'r') as file:
-    #         for line in file:
-    #             if line.strip():
-    #                 line_count += 1
-    #     return line_count
+        # ---------- Run simulation ------------------------
+        start        = time.time()
+        sol          = solve_ivp(self.model, t_span = t_span, y0 = S0, method ='BDF', t_eval = t, args = args)
 
+        # ---------- Handle output ------------------------
+        guesses      = np.array(guesses, dtype = np.float64)
+        derivs       = np.array(derivs)
 
-    # GETTERS
-    def get_dt(self):
-        return self._dt
+        # Reshape guesses and derivs arrays to match solution
+        # This is necessary because solve_ivp() calls model() minimally to improve computational efficiency
+        # but returns sol, an interpolation of the solution at all time points of t_eval. However, guesses
+        # and derivs are only recorded when model() is called (which is why we recorded tfe :) )
+        dt = self.get_dt()
 
-    def get_idx_last_updates(self):
-        return self._idx_last_updates
+        num_iter     = round(self.get_tfe_elt(-1) / dt)
+        t_sol        = np.linspace(0, dt * num_iter, num = num_iter)
+        f_eval       = np.searchsorted(self.get_tfe(), t_sol)
+        guesses      = guesses[:, f_eval]
+        derivs       = derivs[f_eval,:]
+        a11s, a12s, a21s, a22s = guesses
+        a11,  a12,  a21,  a22  = true_vals
 
-    def get_tfe(self):
-        return self._tfe
-
-    def get_tfe_elt(self, i):
-        return self._tfe[i]
-
-    def get_rule(self):
-        return self._rule
-
-
-    # SETTERS
-    def set_dt(self, val):
-        self._dt = val
-
-    def set_idx_last_updates(self, list):
-        self._idx_last_updates = list
-
-    def set_tfe(self, val):
-        self._tfe = val
-
-    def set_idx_last_updates_elt(self, i, val):
-        self._idx_last_updates[i] = val
-
-    def set_rule(self, rule_to_use):
-        # rules = {0: 'constant', 1: 'exact', 2: 'drop_deriv'}
-        self._rule = self.rule_string(rule_to_use)
+        #print("Runtime: {:.4f} seconds.\n".format(time.time() - start))
+        #print("Final a11 abs. error: {:.4e}\n".format(abs(a11 - a11s)[-1]))
+        #print("Final a12 abs. error: {:.4e}\n".format(abs(a12 - a12s)[-1]))
+        #print("Final a21 abs. error: {:.4e}\n".format(abs(a21 - a21s)[-1]))
+        #print("Final a22 abs. error: {:.4e}\n".format(abs(a22 - a22s)[-1]))
+        return sol, guesses, derivs
 
 
 
-    def calc_rhs(self, S, mus, parms):
-        '''
-        Returns derivatives of x, y, xt, yt
-        '''
-        # Extract input
-        x, y, xt, yt = S
-        mu_1, mu_2, mu_3, mu_4 = mus
-        a11, a12, a21, a22, a11_t, a12_t, a21_t, a22_t = parms
-        # Replaced: alpha = a11, beta = a12, delta = a21, gamma = a22
-
-        r1 = a21 * x + a11 * y
-        r2 = a12 * x + a22 * y
-        r3 = a21_t * xt + a11_t * yt - mu_1 * (xt - x) - mu_2 * (yt - y)
-        r4 = a12_t  * xt + a22_t * yt - mu_3 * (xt - x) - mu_4 * (yt - y)
-
-        return r1, r2, r3, r4
-
-
-    def rule_string(self, which):
-        '''
-        Converts rule index to string for retrieving update formula from dictionary
-        '''
-        switcher = {0: 'constant', 1: 'exact', 2: 'drop_deriv'}
-        return switcher.get(which)
-
-
-    def update_formula(self, rule, S, errors, derivs_now, mus, parms):
-        '''
-        Returns parameter update formulas
-        '''
-        # Handle input
-        x, y, xt, yt = S
-        u, v, ut, vt = errors
-        dx_dt, dy_dt, dxt_dt, dyt_dt = derivs_now
-        mu_1, mu_2, mu_3, mu_4 = mus
-        a11, a12, a21, a22, a11_t, a12_t, a21_t, a22_t = parms
-
-        switcher = {
-            'constant'  : [a11_t, a12_t, a21_t, a22_t],
-
-            'exact'     : [(a21_t * xt + a11_t * yt - a21 * x - mu_1 * u - mu_2 * v - ut) / y,
-                           (a12_t * xt  + a22_t * yt - a22 * y - mu_3 * u - mu_4 * v - vt) / x,
-                           (a21_t * xt + a11_t * yt - a11 * y - mu_1 * u - mu_2 * v - ut) / x,
-                           (a12_t * xt  + a22_t * yt - a12 * x  - mu_3 * u - mu_4 * v - vt) / y],
-
-            'drop_deriv': [(a21_t * xt + a11_t * yt - a21 * x - mu_1 * u - mu_2 * v) / y,
-                           (a12_t * xt  + a22_t * yt - a22 * y - mu_3 * v - mu_4 * v) / x,
-                           (a21_t * xt + a11_t * yt - a11 * y - mu_1 * u - mu_2 * v) / x,
-                           (a12_t * xt  + a22_t * yt - a12 * x  - mu_3 * v - mu_4 * v) / y]
-        }
-
-        return switcher.get(rule, "Update rule not recognized")
-
-
-
-    def get_tholds(self, pos_err, ilast):
-        '''
-        Determines update threshold on position error using log linear fit of data
-        since last update
-
-        NOTE: No thresholding is being used in current version of algorithm, but this
-              is in place in case it needs to be used in future iterations.
-        '''
-        log_pos_err = np.log(pos_err[:, ilast:])
-        x_cords = np.arange(log_pos_err.shape[1])
-        y_coords = log_pos_err.T
-        p = np.polyfit(x_cords, y_coords, 1)
-        u_thold = np.exp(p[0, 0] * x_cords[-1] + p[1, 0])
-        v_thold = np.exp(p[0, 1] * x_cords[-1] + p[1, 1])
-
-        return u_thold, v_thold
-
-
-    def update_parms(self, which, S, mus, parms, guesses, thresholds, rule, time_tracker, pos_err, ilast):
-        '''
-        Updates parameter guesses [if thresholds are met]
-        '''
-        curr_time = time_tracker[-1][-1]
-
-        # Extract input
-        x, y, xt, yt = S
-        mu_1, mu_2, mu_3, mu_4 = mus
-        a11, a12, a21, a22, a11_t, a12_t, a21_t, a22_t = parms
-        u_thold, v_thold, ut_thold, vt_thold, d = thresholds
-
-        # Calculate derivatives
-        dx_dt, dy_dt, dxt_dt, dyt_dt = self.calc_rhs(S, mus, parms)
-
-        if self.nan_or_inf_derivs(dx_dt, dy_dt, dxt_dt, dyt_dt ) != False:
-            print('Exit function: update_parms.')
-            return
-
-        else:
-            derivs_now  = np.array([dx_dt, dy_dt, dxt_dt, dyt_dt])
-            # Calculate error
-            u      = xt - x
-            v      = yt - y
-            ut     = dxt_dt - dx_dt
-            vt     = dyt_dt - dy_dt
-            errors = np.array([u, v, ut, vt])
-
-            if abs(u) / abs(x) <= u_thold and abs(v) / abs(y) <= v_thold:
-
-                for i in which:
-                    new = self.update_formula(rule, S, errors, derivs_now, mus, parms)[i]
-                    parms[i + 4] = new
-                    guesses[i].append(new)
-                    time_tracker[0][i] = curr_time
-                    self.set_idx_last_updates_elt(i, pos_err.shape[1] - 1)
-
-            else:
-                for i in update_idx:
-                    parm_idx = i + 4
-                    guesses[i].append(parm_idx)
-
-
+    #3
     def model(self, t, S, mus, parms, thresholds, derivs, guesses, time_tracker, updates_on, err, idx_last_updates):
         '''
         function called by odeint to return the time derivative of
@@ -355,9 +227,19 @@ class LinearNudgingAlg:
         last_updates, time_between, tfe_temp = time_tracker
         self.set_tfe(tfe_temp)
 
+        # mu_val = mus[0]
+        # avg_rel_err = self.get_elt_avg_rel_err(a21, a22, a21_t, a22_t)
+        #
+        # if avg_rel_err >= 1e-5:
+        #     mu_val = 2.10e+08
+        #
+        # else:
+        #     mu_val = 100
+        # mus[0] = mus[3] = mu_val
+
         curr_time = t
         time_tracker[-1].append(curr_time)  # Record time of function call in tfe
-        u_now = abs(S[2] - S[0])               # Current x error |xt - x|
+        u_now = abs(S[2] - S[0])                # Current x error |xt - x|
         v_now = abs(S[3] - S[1])               # Current y error |yt - y|
         err.append([u_now, v_now])
         pos_err = np.array(err).T
@@ -373,6 +255,15 @@ class LinearNudgingAlg:
         to_update  = np.logical_and(time_threshold, updates_on)
 
         update_idx = [i for i, x in enumerate(to_update) if x]
+
+
+        # avg_rel_err = self.get_elt_avg_rel_err(a21, a22, a21_t, a22_t)
+        # if avg_rel_err >= 1e-5:
+        #     self.set_mu_value(self.get_mu_value() + 100)
+        # else:
+        #     self.set_mu_value(100)
+        # mus[0] = mus[3] = self.get_mu_value()
+
         self.update_parms(update_idx, S, mus, parms, guesses, thresholds, self.get_rule(), time_tracker, pos_err, self.get_idx_last_updates())
         no_update_idx = [i for i, x in enumerate(to_update) if not x]
 
@@ -389,6 +280,79 @@ class LinearNudgingAlg:
         # derivs.append(St)
         # return St
 
+
+    #4
+    def update_parms(self, which, S, mus, parms, guesses, thresholds, rule, time_tracker, pos_err, ilast):
+        '''
+        Updates parameter guesses [if thresholds are met]
+        '''
+        curr_time = time_tracker[-1][-1]
+
+        # Extract input
+        x, y, xt, yt = S
+        mu_1, mu_2, mu_3, mu_4 = mus
+
+        a11, a12, a21, a22, a11_t, a12_t, a21_t, a22_t = parms
+        u_thold, v_thold, ut_thold, vt_thold, d = thresholds
+
+        # Calculate derivatives
+        dx_dt, dy_dt, dxt_dt, dyt_dt = self.calc_rhs(S, mus, parms)
+
+        if self.nan_or_inf_derivs(dx_dt, dy_dt, dxt_dt, dyt_dt ) != False:
+            print('Exit function: update_parms.')
+            return
+
+        else:
+            derivs_now  = np.array([dx_dt, dy_dt, dxt_dt, dyt_dt])
+            # Calculate error
+
+            u      = xt - x
+            v      = yt - y
+
+            ut = dxt_dt - dx_dt
+            vt = dyt_dt - dy_dt
+            errors = np.array([u, v, ut, vt])
+
+
+            if abs(u) / abs(x) <= u_thold and abs(v) / abs(y) <= v_thold:
+
+                for i in which:
+                    new_guess = self.update_formula(rule, S, errors, derivs_now, mus, parms)[i]
+                    parms[i + 4] = new_guess
+                    guesses[i].append(new_guess)
+                    time_tracker[0][i] = curr_time
+                    self.set_idx_last_updates_elt(i, pos_err.shape[1] - 1)
+
+            else:
+                for i in update_idx:
+                    parm_idx = i + 4
+                    guesses[i].append(parm_idx)
+
+
+
+
+    def get_elt_avg_rel_err(self, a_true, b_true, a_guess, b_guess):
+        a_rel_err = abs(a_guess - a_true) / abs(a_true)
+        b_rel_err = abs(b_guess - b_true) / abs(b_true)
+
+        return abs(a_rel_err + b_rel_err) / 2
+
+    #5
+    def calc_rhs(self, S, mus, parms):
+        '''
+        Returns derivatives of x, y, xt, yt
+        '''
+        # Extract input
+        x, y, xt, yt = S
+        mu_1, mu_2, mu_3, mu_4 = mus
+        a11, a12, a21, a22, a11_t, a12_t, a21_t, a22_t = parms
+        r1 = a21 * x + a11 * y
+        r2 = a12 * x + a22 * y
+        r3 = a21_t * xt + a11_t * yt - mu_1 * (xt - x) - mu_2 * (yt - y)
+        r4 = a12_t  * xt + a22_t * yt - mu_3 * (xt - x) - mu_4 * (yt - y)
+        return r1, r2, r3, r4
+
+    #6
     def nan_or_inf_derivs(self, r1, r2, r3, r4):
         if math.isinf(r1) != False and math.isinf(r2) != False and math.isinf(r3) != False and math.isinf(r4) != False:
             return True
@@ -399,34 +363,114 @@ class LinearNudgingAlg:
         return False
 
 
-    def run_simulation(self, t_span, S0, t, true_vals, args):
-        mus, parms, thresholds, derivs, guesses, time_tracker, updates_on, err, idx_temp = args
-        self.set_idx_last_updates(idx_temp)
+    #7
+    def update_formula(self, rule, S, errors, derivs_now, mus, parms):
+        '''
+        Returns parameter update formulas
+        '''
+        # Handle input
+        x, y, xt, yt = S
+        u, v, ut, vt = errors
+        dx_dt, dy_dt, dxt_dt, dyt_dt = derivs_now
+        mu_1, mu_2, mu_3, mu_4 = mus
+        a11, a12, a21, a22, a11_t, a12_t, a21_t, a22_t = parms
 
-        # ---------- Run simulation ------------------------
-        start        = time.time()
-        sol          = solve_ivp(self.model, t_span = t_span, y0 = S0, method ='BDF', t_eval = t, args = args)
+        switcher = {
+            'constant'  : [a11_t, a12_t, a21_t, a22_t],
 
-        # ---------- Handle output ------------------------
-        guesses      = np.array(guesses, dtype = np.float64)
-        derivs       = np.array(derivs)
+            'exact'     : [(a21_t * xt + a11_t * yt - a21 * x - mu_1 * u - mu_2 * v - ut) / y,
+                           (a12_t * xt  + a22_t * yt - a22 * y - mu_3 * u - mu_4 * v - vt) / x,
+                           (a21_t * xt + a11_t * yt - a11 * y - mu_1 * u - mu_2 * v - ut) / x,
+                           (a12_t * xt  + a22_t * yt - a12 * x  - mu_3 * u - mu_4 * v - vt) / y],
 
-        # Reshape guesses and derivs arrays to match solution
-        # This is necessary because solve_ivp() calls model() minimally to improve computational efficiency
-        # but returns sol, an interpolation of the solution at all time points of t_eval. However, guesses
-        # and derivs are only recorded when model() is called (which is why we recorded tfe :) )
-        dt = self.get_dt()
-        num_iter     = round(self.get_tfe_elt(-1) / dt)
-        t_sol        = np.linspace(0, dt * num_iter, num = num_iter)
-        f_eval       = np.searchsorted(self.get_tfe(), t_sol)
-        guesses      = guesses[:, f_eval]
-        derivs       = derivs[f_eval,:]
-        a11s, a12s, a21s, a22s = guesses
-        a11,  a12,  a21,  a22  = true_vals
+            'drop_deriv': [(a21_t * xt + a11_t * yt - a21 * x - mu_1 * u - mu_2 * v) / y,
+                           (a12_t * xt  + a22_t * yt - a22 * y - mu_3 * v - mu_4 * v) / x,
+                           (a21_t * xt + a11_t * yt - a11 * y - mu_1 * u - mu_2 * v) / x,
+                           (a12_t * xt  + a22_t * yt - a12 * x  - mu_3 * v - mu_4 * v) / y]
+        }
 
-        #print("Runtime: {:.4f} seconds.\n".format(time.time() - start))
-        #print("Final a11 abs. error: {:.4e}\n".format(abs(a11 - a11s)[-1]))
-        #print("Final a12 abs. error: {:.4e}\n".format(abs(a12 - a12s)[-1]))
-        #print("Final a21 abs. error: {:.4e}\n".format(abs(a21 - a21s)[-1]))
-        #print("Final a22 abs. error: {:.4e}\n".format(abs(a22 - a22s)[-1]))
-        return sol, guesses, derivs
+        return switcher.get(rule, "Update rule not recognized")
+
+
+    def text_file_to_mtrx_list(self, imported_file):
+        mtrx_list = []
+        with open(imported_file, 'r') as file:
+            for line in file:
+                line = line.strip()  # removes any leading or trailing white space
+                if line:  # only processes lines with text (not just white space)
+                    str = line.strip()
+                    vars = str.split("[")[1].split("]")[0]
+                    mtrx_elts = vars.split()
+                    a11, a12, a21, a22 = mtrx_elts
+                    temp_mtrx = np.array([[float(a11), float(a12)], [float(a21), float(a22)]])
+                    mtrx_list.append(temp_mtrx)
+        return mtrx_list
+
+
+
+
+    def rule_string(self, which):
+        '''
+        Converts rule index to string for retrieving update formula from dictionary
+        '''
+        switcher = {0: 'constant', 1: 'exact', 2: 'drop_deriv'}
+        return switcher.get(which)
+
+    def get_tholds(self, pos_err, ilast):
+        '''
+        Determines update threshold on position error using log linear fit of data
+        since last update
+
+        NOTE: No thresholding is being used in current version of algorithm, but this
+              is in place in case it needs to be used in future iterations.
+        '''
+        log_pos_err = np.log(pos_err[:, ilast:])
+        x_cords = np.arange(log_pos_err.shape[1])
+        y_coords = log_pos_err.T
+        p = np.polyfit(x_cords, y_coords, 1)
+        u_thold = np.exp(p[0, 0] * x_cords[-1] + p[1, 0])
+        v_thold = np.exp(p[0, 1] * x_cords[-1] + p[1, 1])
+
+        return u_thold, v_thold
+
+
+    def get_mu_value(self):
+        return self._mu_value
+
+    # GETTERS
+    def get_dt(self):
+        return self._dt
+
+    def get_idx_last_updates(self):
+        return self._idx_last_updates
+
+    def get_tfe(self):
+        return self._tfe
+
+    def get_tfe_elt(self, i):
+        return self._tfe[i]
+
+    def get_rule(self):
+        return self._rule
+
+
+    # SETTERS
+    def set_mu_value(self, val):
+        self._mu_value = val
+
+
+    def set_dt(self, val):
+        self._dt = val
+
+    def set_idx_last_updates(self, list):
+        self._idx_last_updates = list
+
+    def set_tfe(self, val):
+        self._tfe = val
+
+    def set_idx_last_updates_elt(self, i, val):
+        self._idx_last_updates[i] = val
+
+    def set_rule(self, rule_to_use):
+        # rules = {0: 'constant', 1: 'exact', 2: 'drop_deriv'}
+        self._rule = self.rule_string(rule_to_use)

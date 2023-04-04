@@ -42,12 +42,12 @@ class TrDetGraph:
     def set_subplots(self, loop_limit, mu_val):
         self._fig, self._ax = plt.subplots()
         # cycles_abrev = "cc"
-        mu_formatted = str("{:.0e}".format(mu_val))
+        mu_formatted = str("{:.2e}".format(mu_val))
 
         title = self.get_ev_type().upper() + " | " + self.get_pp_type().upper() + " - " + str(loop_limit) + " cc | µ: " + mu_formatted
-        self._ax.set_title(label=title, pad=20)
-        self._ax.set_xlabel("Tr", loc="right")
-        self._ax.set_ylabel("Det", loc="top")
+        self._ax.set_title(label = title, pad = 20)
+        self._ax.set_xlabel("Tr", loc = "right")
+        self._ax.set_ylabel("Det", loc = "top")
         self._fig.set_size_inches(16, 8)
         self._ax = plt.gca()
 
@@ -63,8 +63,8 @@ class TrDetGraph:
         self._ax.xaxis.set_ticks_position("bottom")
         self._ax.yaxis.set_ticks_position("left")
 
-        self._ax.plot(1, 0, ">k", transform=self._ax.get_yaxis_transform(), clip_on=False)
-        self._ax.plot(0, 1, "^k", transform=self._ax.get_xaxis_transform(), clip_on=False)
+        self._ax.plot(1, 0, ">k", transform = self._ax.get_yaxis_transform(), clip_on = False)
+        self._ax.plot(0, 1, "^k", transform = self._ax.get_xaxis_transform(), clip_on = False)
 
     def organize_data(self, guesses, true_vals):
         a11, a12, a21, a22 = true_vals

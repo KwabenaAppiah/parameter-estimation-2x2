@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import solve_ivp
 
-# lorenz nudge, project-specific
+# nudge, project-specific
 from tr_det_graph import TrDetGraph
 from line_graph import LineGraph
 from matrix_2x2 import Matrix2x2
-from sol_graph import SolGraph
+# from sol_graph import SolGraph
 
 class LinearNudgingAlg:
     def __init__(self, *args):
@@ -53,7 +53,7 @@ class LinearNudgingAlg:
         step_val   = 10         # The step value for a22 and a21
         tr_det_graph = TrDetGraph(ev_type, pp_type, loop_limit, mu_val)
         line_graph = LineGraph(ev_type, pp_type)
-        #sol_graph = SolGraph(ev_type, pp_type)
+        # sol_graph = SolGraph(ev_type, pp_type)
 
         print("**********************************************", "START - SIMULATION" ,"***************************************************", '\n')
         i = 0
@@ -68,9 +68,12 @@ class LinearNudgingAlg:
                 if has_5_args == True:
                     a11, a12, a21, a22 = mtrx_list[i][0][0], mtrx_list[i][0][1], mtrx_list[i][1][0], mtrx_list[i][1][1]
                     mtrx = np.array([[a11, a12], [a21, a22]])
-
+                    # if np.any(np.isnan(mtrx)) == True and np.any(np.isinf(mtrx)) == True:
+                    #     print("Pre-skip!")
+                    #     break
                 else:
                     mtrx = Matrix2x2(low_bnd, high_bnd, ev_type, pp_type)
+                    # if np.any(np.isnan(mtrx)) == False and np.any(np.isinf(mtrx)) == False:
                     a11, a12, a21, a22 = mtrx.get_element(0, 0), mtrx.get_element(0, 1), mtrx.get_element(1, 0), mtrx.get_element(1, 1)
 
                 true_vals = np.array([a11, a12, a21, a22])
@@ -101,7 +104,7 @@ class LinearNudgingAlg:
                 # ------------ Simulation parameters ----------------
                 sim_time = 100 # Stopping time
                 # dt = 0.0001  # Timestep
-                # self.set_dt(0.0001)
+                #self.set_dt(0.0001)
                 self.set_dt(1/2 * (1 / self.get_mu_value()))
                 t_span = [0, sim_time]
                 t = np.arange(0, sim_time, self.get_dt())
@@ -126,10 +129,10 @@ class LinearNudgingAlg:
 
                     #Display
                     is_tr_det_graph_plotted = tr_det_graph.organize_data(guesses, true_vals)
+                    line_graph.init(guesses, true_vals, sol, i, 1e-5)
 
                     if is_tr_det_graph_plotted  != False:
-                        line_graph.init(guesses, true_vals, i, 1e-5)
-                        #sol_graph.init(sol, guesses, true_vals, i, 1e-5)
+                        # sol_graph.init(sol, guesses, true_vals, i, 1e-5)
                         i += 1
                         gui_counter += 1
                     else:
@@ -140,7 +143,10 @@ class LinearNudgingAlg:
                 except ValueError:
                     print('\n', mtrx, '\n' + '\n', 'UNUSABLE MTRX', "\n")
                     print("CYCLE:", gui_counter, "- SKIP THIS ITERATION (2).")
-                    break
+
+
+                    # break
+
 
         print("**********************************************","END - SIMULATION" ,"***************************************************", '\n')
         line_graph.display_comp()
@@ -304,14 +310,12 @@ class LinearNudgingAlg:
         else:
             derivs_now  = np.array([dx_dt, dy_dt, dxt_dt, dyt_dt])
             # Calculate error
-
             u      = xt - x
             v      = yt - y
 
             ut = dxt_dt - dx_dt
             vt = dyt_dt - dy_dt
             errors = np.array([u, v, ut, vt])
-
 
             if abs(u) / abs(x) <= u_thold and abs(v) / abs(y) <= v_thold:
 
@@ -326,9 +330,6 @@ class LinearNudgingAlg:
                 for i in update_idx:
                     parm_idx = i + 4
                     guesses[i].append(parm_idx)
-
-
-
 
     def get_elt_avg_rel_err(self, a_true, b_true, a_guess, b_guess):
         a_rel_err = abs(a_guess - a_true) / abs(a_true)
@@ -406,8 +407,6 @@ class LinearNudgingAlg:
         return mtrx_list
 
 
-
-
     def rule_string(self, which):
         '''
         Converts rule index to string for retrieving update formula from dictionary
@@ -451,7 +450,6 @@ class LinearNudgingAlg:
 
     def get_rule(self):
         return self._rule
-
 
     # SETTERS
     def set_mu_value(self, val):

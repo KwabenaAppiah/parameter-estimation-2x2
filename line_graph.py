@@ -203,17 +203,26 @@ class LineGraph:
         y_min = min(y0.min(), y1.min(), y2.min(), y3.min())
         y_max = max(y0.max(), y1.max(), y2.max(), y3.max())
 
-        if y_min <= 0:
-            ax.set_yscale("symlog")
-        else:
-            ax.set_yscale("log")
+        # if y_min <= 0:
+        #     ax.set_yscale("symlog")
+        #     # ax.set_yscale("log")
+        # else:
+        #     ax.set_yscale("log")
         ax.set_xscale("log")
+        ax.set_yscale("log")
         #plt.ylim([self.get_max_sol(y0, y1, y2, y3) , self.get_min_sol(y0, y1, y2, y3)])
 
         ax.plot(t, y0, label = "Sol 1" )
         ax.plot(t, y1, label = "Sol 2" )
         ax.plot(t, y2, label = "Sol 3" )
         ax.plot(t, y3, label = "Sol 4" )
+
+        # print("y0:", y0[0])
+        # print("y1:", y1[0])
+        # print("y2:", y2[0])
+        # print("y3:", y3[0], "\n")
+        #
+        #
         # print("y0:", y0[-1])
         # print("y1:", y1[-1])
         # print("y2:", y2[-1])

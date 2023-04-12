@@ -1,10 +1,12 @@
+import os
 import sys
+import shutil
 from linear_nudging_alg import LinearNudgingAlg  # lorpy
 import numpy as np
 
 
 def main():
-
+    delete_output_dir("../output/")
     # if len(sys.argv) == 6: #actually 5, but 6 in total
     #     import_file_path = sys.argv[5]
     #     lin_nudge_alg = LinearNudgingAlg(ev_type, pp_type, mu_val, relax_time, import_file_path)
@@ -19,7 +21,7 @@ def main():
         str_list  = filename.split("_")
         ev_type =  str_list[0]
         pp_type = str_list[1]
-    
+
 
         if ev_type == "rde":
             if pp_type == "saddle" or pp_type == 'sink' or pp_type == 'source':
@@ -63,7 +65,14 @@ def main():
         print("This application requires either 4 or 7 parameters.")
 
 
-
+def delete_output_dir(path):
+    # Check if the directory exists
+    if os.path.exists(path):
+        # Remove the directory
+        shutil.rmtree(path)
+    else:
+        print("")
+        print("WARNING: The directory", "'" + path + "'", "does not exist.", "\n")
 
 if __name__ == "__main__":
     main()

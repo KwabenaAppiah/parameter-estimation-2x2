@@ -189,23 +189,6 @@ class LineGraph:
             plt.close(fig)
             print("RESULT: No bad matrices were found.")
 
-    # def get_max_sol(self, y0, y1, y2, y3):
-    #     y0_max = np.amax(y0)
-    #     y1_max = np.amax(y1)
-    #     y2_max = np.amax(y2)
-    #     y3_max = np.amax(y3)
-    #     y_max_arr = np.array([y0_max, y1_max, y2_max, y3_max])
-    #     return np.amax(y_max_arr)
-    #
-    # def get_min_sol(self, y0, y1, y2, y3):
-    #     y0_min = np.amin(y0)
-    #     y1_min = np.amin(y1)
-    #     y2_min = np.amin(y2)
-    #     y3_min = np.amin(y3)
-    #     # print("y_min:", y0_min, y1_min, y2_min, y3_min)
-    #     y_min_arr = np.array([y0_min, y1_min, y2_min, y3_min])
-    #     return np.amin(y_min_arr)
-    #     # print("y_max_fin: ", y_min_fin)
 
 
     def display_sol(self, sol, true_vals, cycle_num, sol_type):
@@ -220,18 +203,6 @@ class LineGraph:
         y_min = min(y0.min(), y1.min(), y2.min(), y3.min())
         y_max = max(y0.max(), y1.max(), y2.max(), y3.max())
 
-        # Set the y-axis limits manually using the calculated minimum and maximum values
-        # ax.set_ylim(abs(y_min), y_max)
-
-        # ticks = [tick for tick in ax.get_yticks() if tick != 0]
-        # ax.set_yticks(ticks)
-        # Create an array of tick values that excludes zero
-
-        # Remove the 0 tick from the y-axis
-        # yticks = ax.get_yticks()
-        # yticks = np.delete(yticks, np.where(yticks == 0))
-        # ax.set_yticks(yticks)
-
         if y_min <= 0:
             ax.set_yscale("symlog")
         else:
@@ -243,6 +214,10 @@ class LineGraph:
         ax.plot(t, y1, label = "Sol 2" )
         ax.plot(t, y2, label = "Sol 3" )
         ax.plot(t, y3, label = "Sol 4" )
+        # print("y0:", y0[-1])
+        # print("y1:", y1[-1])
+        # print("y2:", y2[-1])
+        # print("y3:", y3[-1])
 
         # For file title
         a11, a12, a21, a22 = true_vals
@@ -263,4 +238,5 @@ class LineGraph:
         os.makedirs(subdir, exist_ok = True)
         fig.savefig(subdir + filename + "_mtrx_" + str(cycle_num) + ".png", dpi = 300)
         # plt.close(fig)
+        plt.minorticks_on()
         plt.close('all')

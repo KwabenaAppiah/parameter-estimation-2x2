@@ -242,29 +242,28 @@ class LineGraph:
         # Calculate the minimum and maximum values of the y-data
         y_min = min(y0.min(), y1.min(), y2.min(), y3.min())
         y_max = max(y0.max(), y1.max(), y2.max(), y3.max())
-        print("y_min and y_max:", y_min, y_max)
+        # print("y_min and y_max:", y_min, y_max)
 
-        # if y_min < 0:
-        #     ax.set_yscale("symlog")
-        #     # ax.set_yscale("log")
-        # else:
-        #     ax.set_yscale("log")
 
         ax.set_xlabel("Time")
         ax.set_ylabel("Y (Solutions)")
-        ax.set_xscale("log")
-        ax.set_yscale("log")
-        #plt.ylim([self.get_max_sol(y0, y1, y2, y3) , self.get_min_sol(y0, y1, y2, y3)])
 
+        #plt.ylim([self.get_max_sol(y0, y1, y2, y3) , self.get_min_sol(y0, y1, y2, y3)])
         ax.plot(t, y0, label = "Sol 1" )
         ax.plot(t, y1, label = "Sol 2" )
         ax.plot(t, y2, label = "Sol 3" )
         ax.plot(t, y3, label = "Sol 4" )
 
-        # print("y0:", y0[-1])
-        # print("y1:", y1[-1])
-        # print("y2:", y2[-1])
-        # print("y3:", y3[-1])
+        if y_min < 0:
+            ax.set_yscale('asinh')
+             #ax.set_yscale("symlog", linthresh=.000000000000000000001)
+             #ax.set_yscale("log", nonpositive="clip")
+        else:
+            ax.set_yscale("log")
+
+        ax.set_xscale("log")
+
+        print("y_min:", y_min)
 
         # For file title
         a11, a12, a21, a22 = true_vals

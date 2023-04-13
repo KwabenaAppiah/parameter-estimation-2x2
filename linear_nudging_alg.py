@@ -149,7 +149,7 @@ class LinearNudgingAlg:
 
 
         print("**********************************************","END - SIMULATION" ,"***************************************************", '\n')
-        line_graph.display_comp()
+        line_graph.display_avg_rel_err_comp()
         tr_det_graph.display(ev_type, pp_type, loop_limit)
         plt.show()
 

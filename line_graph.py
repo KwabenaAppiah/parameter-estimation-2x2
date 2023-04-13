@@ -63,7 +63,7 @@ class LineGraph:
         self._ax.set_yscale('log')
         self._ax.set_title(label = title, pad = 25)
         self._ax.set_xlabel("Iterations")
-        self._ax.set_ylabel("Avg. Rel. Errors")
+        self._ax.set_ylabel("Avg. Rel. Error")
         self._fig.set_size_inches(16, 8)
 
     # def set_is_there_a_plottable_mtrx(self, bool):
@@ -97,12 +97,13 @@ class LineGraph:
 
 
             if a21_a22_nth_avg_rel_err >= set_boundry_val: # bad matricies
-                self.display_indv(true_vals, cycle_num, total_err_steps)
+                self.display_avg_rel_err_indv(true_vals, cycle_num, total_err_steps)
                 self.write_to_file("mtrx_" + str(cycle_num) + "|" + str(a21_a22_nth_avg_rel_err) + "|" + str(true_vals), "bad")
                 self.write_to_file("mtrx_" + str(cycle_num) + "|" + str(a21_a22_nth_avg_rel_err) + "|" + str(true_vals), "all")
                 self.plot_graph_comp(cycle_num, total_err_steps)
                 self.set_has_bad_matrices_comp(True)
                 self.display_sol(sol, true_vals, cycle_num, "bad")
+                self.display_rel_err(sol, a21_rel_err, a22_rel_err, true_vals, cycle_num, "bad")
                 # self.set_is_there_a_plottable_mtrx(True)
                 return True
 
@@ -110,6 +111,7 @@ class LineGraph:
                 self.write_to_file("mtrx_" + str(cycle_num) + "|" + str(a21_a22_nth_avg_rel_err) + "|" + str(true_vals), "good")
                 self.write_to_file("mtrx_" + str(cycle_num) + "|" + str(a21_a22_nth_avg_rel_err) + "|" + str(true_vals), "all")
                 self.display_sol(sol, true_vals, cycle_num, "good")
+                self.display_rel_err(sol, a21_rel_err, a22_rel_err, true_vals, cycle_num, "good")
                 # self.set_is_there_a_plottable_mtrx(True)
                 return True
 
@@ -139,35 +141,37 @@ class LineGraph:
         return "{:.3f}".format(val)
 
 
-    def display_indv(self, true_vals, cycle_num, total_err_steps):
+    def display_avg_rel_err_indv(self, true_vals, cycle_num, total_err_steps):
         ev_type = self.get_ev_type()
         pp_type = self.get_pp_type()
         fig, ax = plt.subplots()
         fig.set_size_inches(16, 8)
         ax.plot(list(range(len(total_err_steps))), total_err_steps, label = "MX" + " " + str(cycle_num))
-        a11, a12, a21, a22 = true_vals
-        a11_str, a12_str = self.format_fl_vals(a11), self.format_fl_vals(a12)
-        a21_str, a22_str = self.format_fl_vals(a21), self.format_fl_vals(a22)
-        true_vals_str = "[" + a11_str +", " + a12_str + ", "+ a21_str +", " + a22_str + "]"
-        # title = ev_type.upper()+ " | " + pp_type.upper() + " - MATRIX " + str(cycle_num) + " : " + str(true_vals)
-        title = ev_type.upper()+ " | " + pp_type.upper() + " - MTRX " + str(cycle_num) + " : " + true_vals_str
-        ax.set_title(label = title, pad = 20)
         ax.set_xlabel("Iterations")
         ax.set_ylabel("Avg. Rel. Errors")
         ax.set_yscale("log")
 
+        # For title
+        a11, a12, a21, a22 = true_vals
+        a11_str, a12_str = self.format_fl_vals(a11), self.format_fl_vals(a12)
+        a21_str, a22_str = self.format_fl_vals(a21), self.format_fl_vals(a22)
+        true_vals_str = "[" + a11_str +", " + a12_str + ", "+ a21_str +", " + a22_str + "]"
+        title = ev_type.upper()+ " | " + pp_type.upper() + " - MTRX " + str(cycle_num) + " : " + true_vals_str
+        ax.set_title(label = title, pad = 20)
+
+
         # Output IMG files
         output_type = "indv"
         ev_pp_type = self.get_ev_type() + "_" + self.get_pp_type()
-        subdir = "../output/" + ev_pp_type + "_" + self.get_date_str() + "/line_graph" + "_" + output_type+ "/"
-        filename = "line_graph" + "_" + ev_pp_type
+        subdir = "../output/" + ev_pp_type + "_" + self.get_date_str() + "/avg_rel_err_graphs/avg_rel_err_graph" + "_" + output_type+ "/"
+        filename = "avg_rel_err_graph" + "_" + ev_pp_type
         os.makedirs(subdir, exist_ok = True)
         fig.savefig(subdir + filename + "_mtrx_" + str(cycle_num) + ".png", dpi = 300)
         # plt.close(fig)
         plt.close('all')
 
 
-    def display_comp(self):
+    def display_avg_rel_err_comp(self):
         if self.has_bad_matrices_comp() != False:
             true_vals, ev_type, pp_type = self.get_true_vals_comp(), self.get_ev_type(), self.get_pp_type()
             fig, ax = self.get_subplots_comp()
@@ -178,7 +182,7 @@ class LineGraph:
             ev_pp_type = self.get_ev_type() + '_' + self.get_pp_type()
             # sub_dir =   "../output/line_graph" + "_" + output_type + "_" + ev_type + "_" + pp_type
             subdir =   "../output/" + ev_pp_type + "_" + self.get_date_str() + "/"
-            filename =  "line_graph" + "_" + ev_pp_type + "_" + output_type
+            filename =  "avg_rel_err_graph" + "_" + ev_pp_type + "_" + output_type
             os.makedirs(subdir, exist_ok = True)
             fig.savefig(subdir + filename + ".png", dpi = 300)
             plt.close(fig)
@@ -190,8 +194,44 @@ class LineGraph:
             print("RESULT: No bad matrices were found.")
 
 
+    def display_rel_err(self, sol, a21_rel_err, a22_rel_err, true_vals, cycle_num, mtrx_type):
+        t = np.array(sol.t)
+        ev_type = self.get_ev_type()
+        pp_type = self.get_pp_type()
+        fig, ax = plt.subplots()
+        fig.set_size_inches(16, 8)
+        ax.set_xlabel("Time")
+        ax.set_ylabel("a21, a22 - Relative Error")
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        # print(a21_rel_err)
+        # quit()
 
-    def display_sol(self, sol, true_vals, cycle_num, sol_type):
+        ax.plot(t, a21_rel_err, label = "a21 rel err" )
+        ax.plot(t, a22_rel_err, label = "a22 rel err" )
+
+        # For title
+        a11, a12, a21, a22 = true_vals
+        a11_str, a12_str = self.format_fl_vals(a11), self.format_fl_vals(a12)
+        a21_str, a22_str = self.format_fl_vals(a21), self.format_fl_vals(a22)
+        true_vals_str = "[" + a11_str +", " + a12_str + ", "+ a21_str +", " + a22_str + "]"
+        title = ev_type.upper()+ " | " + pp_type.upper() + " - MTRX " + str(cycle_num) + " : " + true_vals_str
+        ax.set_title(label = title, pad = 20)
+
+        # Output IMG files
+        ev_pp_type = self.get_ev_type() + "_" + self.get_pp_type()
+        subdir = "../output/" + ev_pp_type + "_" + self.get_date_str() + "/rel_err_graphs/rel_err_graph" + "_" + mtrx_type + "/"
+        filename = "rel_err_graph" + "_" + ev_pp_type
+        ax.legend(loc = "best", bbox_to_anchor=(1, 0.5))
+        os.makedirs(subdir, exist_ok = True)
+        fig.savefig(subdir + filename + "_mtrx_" + str(cycle_num) + ".png", dpi = 300)
+        # plt.close(fig)
+        plt.minorticks_on()
+        plt.close('all')
+
+
+
+    def display_sol(self, sol, true_vals, cycle_num, mtrx_type):
         t = np.array(sol.t)
         y0, y1, y2, y3 = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
         ev_type = self.get_ev_type()
@@ -202,12 +242,16 @@ class LineGraph:
         # Calculate the minimum and maximum values of the y-data
         y_min = min(y0.min(), y1.min(), y2.min(), y3.min())
         y_max = max(y0.max(), y1.max(), y2.max(), y3.max())
+        print("y_min and y_max:", y_min, y_max)
 
-        # if y_min <= 0:
+        # if y_min < 0:
         #     ax.set_yscale("symlog")
         #     # ax.set_yscale("log")
         # else:
         #     ax.set_yscale("log")
+
+        ax.set_xlabel("Time")
+        ax.set_ylabel("Y (Solutions)")
         ax.set_xscale("log")
         ax.set_yscale("log")
         #plt.ylim([self.get_max_sol(y0, y1, y2, y3) , self.get_min_sol(y0, y1, y2, y3)])
@@ -217,12 +261,6 @@ class LineGraph:
         ax.plot(t, y2, label = "Sol 3" )
         ax.plot(t, y3, label = "Sol 4" )
 
-        # print("y0:", y0[0])
-        # print("y1:", y1[0])
-        # print("y2:", y2[0])
-        # print("y3:", y3[0], "\n")
-        #
-        #
         # print("y0:", y0[-1])
         # print("y1:", y1[-1])
         # print("y2:", y2[-1])
@@ -236,12 +274,10 @@ class LineGraph:
         title = ev_type.upper()+ " | " + pp_type.upper() + " - MTRX " + str(cycle_num) + " : " + true_vals_str
         ax.set_title(label = title, pad = 20)
 
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Y (Solutions)")
 
         # Output IMG files
         ev_pp_type = self.get_ev_type() + "_" + self.get_pp_type()
-        subdir = "../output/" + ev_pp_type + "_" + self.get_date_str() + "/sol_graph" + "_" + sol_type + "/"
+        subdir = "../output/" + ev_pp_type + "_" + self.get_date_str() + "/sol_graphs/sol_graph" + "_" + mtrx_type + "/"
         filename = "sol_graph" + "_" + ev_pp_type
         ax.legend(loc="best", bbox_to_anchor=(1, 0.5))
         os.makedirs(subdir, exist_ok = True)

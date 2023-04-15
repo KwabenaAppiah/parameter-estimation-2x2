@@ -70,12 +70,13 @@ class LineGraph:
     #     self._is_there_a_plottable_mtrx = bool
 
 
-    def init(self, guesses, true_vals, sol, cycle_num, set_boundry_val):
+    def init(self, guesses, true_vals, time, cycle_num, set_boundry_val, solutions):
         a11s, a12s, a21s, a22s = guesses
         a11, a12, a21, a22 = true_vals
         total_err_steps = []
         a21_rel_err = []
         a22_rel_err = []
+        # x, y, xt, yt = solutions
         #is_there_a_plottable_mtrx = False
 
         if a21 != 0 and a22 != 0:
@@ -102,16 +103,16 @@ class LineGraph:
                 self.write_to_file("mtrx_" + str(cycle_num) + "|" + str(a21_a22_nth_avg_rel_err) + "|" + str(true_vals), "all")
                 self.plot_graph_comp(cycle_num, total_err_steps)
                 self.set_has_bad_matrices_comp(True)
-                self.display_sol(sol, true_vals, cycle_num, "bad")
-                self.display_rel_err(sol, a21_rel_err, a22_rel_err, true_vals, cycle_num, "bad")
+                self.display_rel_err(time, a21_rel_err, a22_rel_err, true_vals, cycle_num, "bad")
+                self.display_sol_xy(solutions, true_vals, cycle_num, "bad")
                 # self.set_is_there_a_plottable_mtrx(True)
                 return True
 
             elif a21_a22_nth_avg_rel_err < set_boundry_val: # good matricies
                 self.write_to_file("mtrx_" + str(cycle_num) + "|" + str(a21_a22_nth_avg_rel_err) + "|" + str(true_vals), "good")
                 self.write_to_file("mtrx_" + str(cycle_num) + "|" + str(a21_a22_nth_avg_rel_err) + "|" + str(true_vals), "all")
-                self.display_sol(sol, true_vals, cycle_num, "good")
-                self.display_rel_err(sol, a21_rel_err, a22_rel_err, true_vals, cycle_num, "good")
+                self.display_rel_err(time, a21_rel_err, a22_rel_err, true_vals, cycle_num, "good")
+                self.display_sol_xy(solutions, true_vals, cycle_num, "good")
                 # self.set_is_there_a_plottable_mtrx(True)
                 return True
 
@@ -155,7 +156,7 @@ class LineGraph:
         a11, a12, a21, a22 = true_vals
         a11_str, a12_str = self.format_fl_vals(a11), self.format_fl_vals(a12)
         a21_str, a22_str = self.format_fl_vals(a21), self.format_fl_vals(a22)
-        true_vals_str = "[" + a11_str +", " + a12_str + ", "+ a21_str +", " + a22_str + "]"
+        true_vals_str = "[" + a11_str + ", " + a12_str + ", " + a21_str +", " + a22_str + "]"
         title = ev_type.upper()+ " | " + pp_type.upper() + " - MTRX " + str(cycle_num) + " : " + true_vals_str
         ax.set_title(label = title, pad = 20)
 
@@ -194,8 +195,8 @@ class LineGraph:
             print("RESULT: No bad matrices were found.")
 
 
-    def display_rel_err(self, sol, a21_rel_err, a22_rel_err, true_vals, cycle_num, mtrx_type):
-        t = np.array(sol.t)
+    def display_rel_err(self, time, a21_rel_err, a22_rel_err, true_vals, cycle_num, mtrx_type):
+        # t = np.array(sol.t)
         ev_type = self.get_ev_type()
         pp_type = self.get_pp_type()
         fig, ax = plt.subplots()
@@ -207,8 +208,8 @@ class LineGraph:
         # print(a21_rel_err)
         # quit()
 
-        ax.plot(t, a21_rel_err, label = "a21 rel err" )
-        ax.plot(t, a22_rel_err, label = "a22 rel err" )
+        ax.plot(time, a21_rel_err, label = "a21 rel err" )
+        ax.plot(time, a22_rel_err, label = "a22 rel err" )
 
         # For title
         a11, a12, a21, a22 = true_vals
@@ -231,39 +232,22 @@ class LineGraph:
 
 
 
-    def display_sol(self, sol, true_vals, cycle_num, mtrx_type):
-        t = np.array(sol.t)
-        y0, y1, y2, y3 = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
+    def display_sol_xy(self, solutions, true_vals, cycle_num, mtrx_type):
+        x, y, xt, yt = solutions
         ev_type = self.get_ev_type()
         pp_type = self.get_pp_type()
         fig, ax = plt.subplots()
         fig.set_size_inches(16, 8)
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        # ax.xaxis.zoom(3)
+        ax.plot(x, y, label = "True Sol" )
+        ax.plot(xt, yt, label = "Est. Sol" )
+        print("x, y:", x[-1], y[-1])
+        print("xt, yt:", xt[-1], yt[-1])
+        plt.minorticks_on()
 
-        # Calculate the minimum and maximum values of the y-data
-        y_min = min(y0.min(), y1.min(), y2.min(), y3.min())
-        y_max = max(y0.max(), y1.max(), y2.max(), y3.max())
-        # print("y_min and y_max:", y_min, y_max)
-
-
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Y (Solutions)")
-
-        #plt.ylim([self.get_max_sol(y0, y1, y2, y3) , self.get_min_sol(y0, y1, y2, y3)])
-        ax.plot(t, y0, label = "Sol 1" )
-        ax.plot(t, y1, label = "Sol 2" )
-        ax.plot(t, y2, label = "Sol 3" )
-        ax.plot(t, y3, label = "Sol 4" )
-
-        if y_min < 0:
-            ax.set_yscale('asinh')
-             #ax.set_yscale("symlog", linthresh=.000000000000000000001)
-             #ax.set_yscale("log", nonpositive="clip")
-        else:
-            ax.set_yscale("log")
-
-        ax.set_xscale("log")
-
-        print("y_min:", y_min)
+        # print(x)
 
         # For file title
         a11, a12, a21, a22 = true_vals
@@ -276,11 +260,11 @@ class LineGraph:
 
         # Output IMG files
         ev_pp_type = self.get_ev_type() + "_" + self.get_pp_type()
-        subdir = "../output/" + ev_pp_type + "_" + self.get_date_str() + "/sol_graphs/sol_graph" + "_" + mtrx_type + "/"
-        filename = "sol_graph" + "_" + ev_pp_type
+        subdir = "../output/" + ev_pp_type + "_" + self.get_date_str() + "/sol_graphs_xy/sol_graph_xy" + "_" + mtrx_type + "/"
+        filename = "sol_graph_xy" + "_" + ev_pp_type
         ax.legend(loc="best", bbox_to_anchor=(1, 0.5))
         os.makedirs(subdir, exist_ok = True)
         fig.savefig(subdir + filename + "_mtrx_" + str(cycle_num) + ".png", dpi = 300)
         # plt.close(fig)
-        plt.minorticks_on()
+        # plt.minorticks_on()
         plt.close('all')

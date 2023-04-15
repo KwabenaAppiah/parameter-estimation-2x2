@@ -53,7 +53,6 @@ class LinearNudgingAlg:
         step_val   = 10         # The step value for a22 and a21
         tr_det_graph = TrDetGraph(ev_type, pp_type, loop_limit, mu_val)
         line_graph = LineGraph(ev_type, pp_type)
-        # sol_graph = SolGraph(ev_type, pp_type)
 
         print("**********************************************", "START - SIMULATION" ,"***************************************************", '\n')
         i = 0
@@ -77,6 +76,7 @@ class LinearNudgingAlg:
                     a11, a12, a21, a22 = mtrx.get_element(0, 0), mtrx.get_element(0, 1), mtrx.get_element(1, 0), mtrx.get_element(1, 1)
 
                 true_vals = np.array([a11, a12, a21, a22])
+                self.reset_solutions() # Reset solutions once each matrix is initialized
 
                 # NOTE: Code is set up to only update parameters with guesses different from
                 #       the true value. This needs to be toggled within the script now but could
@@ -126,10 +126,13 @@ class LinearNudgingAlg:
                     time_tracker = [last_updates, time_between, self.get_tfe()]
                     _args = (mus, parms, thresholds, derivs, guesses, time_tracker, updates_on, err, self.get_idx_last_updates())
                     sol, guesses, derivs = self.run_simulation(t_span, S0, t, true_vals, _args)
+                    # x, y, xt, yt = self.get_solutions()
+                    # print(x)
+                    # quit()
 
                     #Display
                     is_tr_det_graph_plotted = tr_det_graph.organize_data(guesses, true_vals)
-                    line_graph.init(guesses, true_vals, sol, i, 1e-5)
+                    line_graph.init(guesses, true_vals, sol.t, i, 1e-5, self.get_solutions())
 
                     if is_tr_det_graph_plotted  != False:
                         # sol_graph.init(sol, guesses, true_vals, i, 1e-5)
@@ -143,10 +146,7 @@ class LinearNudgingAlg:
                 except ValueError:
                     print('\n', mtrx, '\n' + '\n', 'UNUSABLE MTRX', "\n")
                     print("CYCLE:", gui_counter, "- SKIP THIS ITERATION (2).")
-
-
                     # break
-
 
         print("**********************************************","END - SIMULATION" ,"***************************************************", '\n')
         line_graph.display_avg_rel_err_comp()
@@ -303,7 +303,7 @@ class LinearNudgingAlg:
         # Calculate derivatives
         dx_dt, dy_dt, dxt_dt, dyt_dt = self.calc_rhs(S, mus, parms)
 
-        if self.nan_or_inf_derivs(dx_dt, dy_dt, dxt_dt, dyt_dt ) != False:
+        if self.nan_or_inf_derivs(dx_dt, dy_dt, dxt_dt, dyt_dt) != False:
             print('Exit function: update_parms.')
             return
 
@@ -350,6 +350,9 @@ class LinearNudgingAlg:
         r2 = a12 * x + a22 * y
         r3 = a21_t * xt + a11_t * yt - mu_1 * (xt - x) - mu_2 * (yt - y)
         r4 = a12_t  * xt + a22_t * yt - mu_3 * (xt - x) - mu_4 * (yt - y)
+        # print("x, y: ", x, y)
+        # print("xt, yt: ", xt, yt)
+        self.set_solutions(x, y, xt, yt)
         return r1, r2, r3, r4
 
     #6
@@ -451,6 +454,12 @@ class LinearNudgingAlg:
     def get_rule(self):
         return self._rule
 
+    # def is_mtrx_usable(self):
+    #     return self._is_mtrx_skippable
+
+    def get_solutions(self):
+        return self._x_list, self._y_list, self._xt_list, self._yt_list
+
     # SETTERS
     def set_mu_value(self, val):
         self._mu_value = val
@@ -471,3 +480,18 @@ class LinearNudgingAlg:
     def set_rule(self, rule_to_use):
         # rules = {0: 'constant', 1: 'exact', 2: 'drop_deriv'}
         self._rule = self.rule_string(rule_to_use)
+
+    def set_solutions(self, x, y, xt, yt):
+        self._x_list.append(x)
+        self._y_list.append(y)
+        self._xt_list.append(xt)
+        self._yt_list.append(yt)
+
+    def reset_solutions(self):
+        self._x_list = []
+        self._y_list = []
+        self._xt_list = []
+        self._yt_list = []
+
+    # def set_is_mtrx_usable(self, bool):
+    #     self._is_mtrx_skippable = bool

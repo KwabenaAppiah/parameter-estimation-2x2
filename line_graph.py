@@ -97,6 +97,7 @@ class LineGraph:
             #     return True
 
 
+
             if a21_a22_nth_avg_rel_err >= set_boundry_val: # bad matricies
                 self.display_avg_rel_err_indv(true_vals, cycle_num, total_err_steps)
                 self.write_to_file("mtrx_" + str(cycle_num) + "|" + str(a21_a22_nth_avg_rel_err) + "|" + str(true_vals), "bad")
@@ -105,6 +106,7 @@ class LineGraph:
                 self.set_has_bad_matrices_comp(True)
                 self.display_rel_err(time, a21_rel_err, a22_rel_err, true_vals, cycle_num, "bad")
                 self.display_sol_xy(solutions, true_vals, cycle_num, "bad")
+                self.display_sol_t(time, solutions, true_vals, cycle_num, "bad")
                 # self.set_is_there_a_plottable_mtrx(True)
                 return True
 
@@ -113,6 +115,7 @@ class LineGraph:
                 self.write_to_file("mtrx_" + str(cycle_num) + "|" + str(a21_a22_nth_avg_rel_err) + "|" + str(true_vals), "all")
                 self.display_rel_err(time, a21_rel_err, a22_rel_err, true_vals, cycle_num, "good")
                 self.display_sol_xy(solutions, true_vals, cycle_num, "good")
+                self.display_sol_t(time, solutions, true_vals, cycle_num, "good")
                 # self.set_is_there_a_plottable_mtrx(True)
                 return True
 
@@ -241,13 +244,10 @@ class LineGraph:
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
         # ax.xaxis.zoom(3)
-        ax.plot(x, y, label = "True Sol" )
-        ax.plot(xt, yt, label = "Est. Sol" )
+        ax.plot(x, y, label = "True Sol" , color="green")
+        ax.plot(xt, yt, label = "Est. Sol", color="red" )
         print("x, y:", x[-1], y[-1])
         print("xt, yt:", xt[-1], yt[-1])
-        plt.minorticks_on()
-
-        # print(x)
 
         # For file title
         a11, a12, a21, a22 = true_vals
@@ -262,9 +262,61 @@ class LineGraph:
         ev_pp_type = self.get_ev_type() + "_" + self.get_pp_type()
         subdir = "../output/" + ev_pp_type + "_" + self.get_date_str() + "/sol_graphs_xy/sol_graph_xy" + "_" + mtrx_type + "/"
         filename = "sol_graph_xy" + "_" + ev_pp_type
-        ax.legend(loc="best", bbox_to_anchor=(1, 0.5))
+        ax.legend(loc = "best", bbox_to_anchor = (1, 0.5))
         os.makedirs(subdir, exist_ok = True)
         fig.savefig(subdir + filename + "_mtrx_" + str(cycle_num) + ".png", dpi = 300)
         # plt.close(fig)
-        # plt.minorticks_on()
+        plt.minorticks_on()
+        plt.close('all')
+
+    def truncate_list(self, lst, n):
+        return lst[:n]
+
+    def smallest_list_length(self, list_1, list_2):
+        return min(len(list_1), len(list_2))
+
+
+    def display_sol_t(self, time, solutions, true_vals, cycle_num, mtrx_type):
+        x, y, xt, yt = solutions
+        ev_type = self.get_ev_type()
+        pp_type = self.get_pp_type()
+        fig, (ax_1, ax_2) = plt.subplots(1, 2)
+        fig.set_size_inches(16, 8)
+
+        # For x and xt
+        ax_1.set_ylabel("x and xt")
+        ax_1.set_xlabel("Time")
+        min_x = self.smallest_list_length(x, xt)
+        time_x = self.truncate_list(time, min_x)
+        ax_1.plot(time_x, x, label = "x")
+        ax_1.plot(time_x, xt, label = "xt")
+        ax_1.legend(loc = "best")
+        # ax_1.set_xscale("log")
+
+        # For y and yt
+        ax_2.set_ylabel("y and yt")
+        ax_2.set_xlabel("Time")
+        min_y = self.smallest_list_length(y, yt)
+        time_y = self.truncate_list(time, min_y)
+        ax_2.plot(time_y, y, label = "y")
+        ax_2.plot(time_y, yt, label = "yt")
+        ax_2.legend(loc = "best")
+        # ax_2.set_xscale("log")
+
+        #For title
+        a11, a12, a21, a22 = true_vals
+        a11_str, a12_str = self.format_fl_vals(a11), self.format_fl_vals(a12)
+        a21_str, a22_str = self.format_fl_vals(a21), self.format_fl_vals(a22)
+        true_vals_str = "[" + a11_str +", " + a12_str + ", "+ a21_str +", " + a22_str + "]"
+        title = ev_type.upper()+ " | " + pp_type.upper() + " - MTRX " + str(cycle_num) + " : " + true_vals_str
+        # ax.set_title(label = title, pad = 20)
+        fig.suptitle(title)
+
+        # Output IMG files
+        ev_pp_type = self.get_ev_type() + "_" + self.get_pp_type()
+        subdir = "../output/" + ev_pp_type + "_" + self.get_date_str() + "/sol_graph_t/sol_graph_t" + "_" + mtrx_type + "/"
+        filename = "sol_graph_t" + "_" + ev_pp_type
+        # ax_1.legend(loc = "best", bbox_to_anchor=(1, 0.5))
+        os.makedirs(subdir, exist_ok = True)
+        fig.savefig(subdir + filename + "_mtrx_" + str(cycle_num) + ".png", dpi = 300)
         plt.close('all')

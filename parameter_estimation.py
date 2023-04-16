@@ -1,7 +1,7 @@
 import os
 import sys
 import shutil
-from linear_nudging_alg import LinearNudgingAlg  # lorpy
+from linear_nudging_alg import LinearNudgingAlg  
 import numpy as np
 
 

@@ -276,10 +276,12 @@ class LineGraph:
         return min(len(list_1), len(list_2))
 
 
+
     def display_sol_t(self, time, solutions, true_vals, cycle_num, mtrx_type):
         x, y, xt, yt = solutions
         ev_type = self.get_ev_type()
         pp_type = self.get_pp_type()
+        # fig, (ax_1, ax_2) = plt.subplots(1, 2)
         fig, (ax_1, ax_2) = plt.subplots(1, 2)
         fig.set_size_inches(16, 8)
 
@@ -291,7 +293,6 @@ class LineGraph:
         ax_1.plot(time_x, x, label = "x")
         ax_1.plot(time_x, xt, label = "xt")
         ax_1.legend(loc = "best")
-        # ax_1.set_xscale("log")
 
         # For y and yt
         ax_2.set_ylabel("y and yt")
@@ -301,13 +302,13 @@ class LineGraph:
         ax_2.plot(time_y, y, label = "y")
         ax_2.plot(time_y, yt, label = "yt")
         ax_2.legend(loc = "best")
-        # ax_2.set_xscale("log")
+
 
         #For title
         a11, a12, a21, a22 = true_vals
         a11_str, a12_str = self.format_fl_vals(a11), self.format_fl_vals(a12)
         a21_str, a22_str = self.format_fl_vals(a21), self.format_fl_vals(a22)
-        true_vals_str = "[" + a11_str +", " + a12_str + ", "+ a21_str +", " + a22_str + "]"
+        true_vals_str = "[" + a11_str + ", " + a12_str + ", " + a21_str + ", " + a22_str + "]"
         title = ev_type.upper()+ " | " + pp_type.upper() + " - MTRX " + str(cycle_num) + " : " + true_vals_str
         # ax.set_title(label = title, pad = 20)
         fig.suptitle(title)
@@ -319,4 +320,5 @@ class LineGraph:
         # ax_1.legend(loc = "best", bbox_to_anchor=(1, 0.5))
         os.makedirs(subdir, exist_ok = True)
         fig.savefig(subdir + filename + "_mtrx_" + str(cycle_num) + ".png", dpi = 300)
+        plt.minorticks_on()
         plt.close('all')

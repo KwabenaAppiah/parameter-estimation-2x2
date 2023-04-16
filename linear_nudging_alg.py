@@ -77,6 +77,7 @@ class LinearNudgingAlg:
 
                 true_vals = np.array([a11, a12, a21, a22])
                 self.reset_solutions() # Reset solutions once each matrix is initialized
+                # self.set_is_mtrx_usable(True)
 
                 # NOTE: Code is set up to only update parameters with guesses different from
                 #       the true value. This needs to be toggled within the script now but could
@@ -455,7 +456,7 @@ class LinearNudgingAlg:
         return self._rule
 
     # def is_mtrx_usable(self):
-    #     return self._is_mtrx_skippable
+    #     return self._is_mtrx_usable
 
     def get_solutions(self):
         return self._x_list, self._y_list, self._xt_list, self._yt_list
@@ -494,4 +495,4 @@ class LinearNudgingAlg:
         self._yt_list = []
 
     # def set_is_mtrx_usable(self, bool):
-    #     self._is_mtrx_skippable = bool
+    #     self._is_mtrx_usable = bool

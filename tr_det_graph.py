@@ -42,9 +42,9 @@ class TrDetGraph:
     def set_subplots(self, loop_limit, mu_val):
         self._fig, self._ax = plt.subplots()
         # cycles_abrev = "cc"
-        mu_formatted = str("{:.2e}".format(mu_val))
-
-        title = self.get_ev_type().upper() + " | " + self.get_pp_type().upper() + " - " + str(loop_limit) + " cc | µ: " + mu_formatted
+        # mu_formatted = str("{:.2e}".format(mu_val))
+        # title = self.get_ev_type().upper() + " | " + self.get_pp_type().upper() + " - " + str(loop_limit) + " cc | µ: " + mu_formatted
+        title = self.get_ev_type().upper() + " | " + self.get_pp_type().upper() + " - " + str(loop_limit) + "cc"
         self._ax.set_title(label = title, pad = 20)
         self._ax.set_xlabel("Tr", loc = "right")
         self._ax.set_ylabel("Det", loc = "top")

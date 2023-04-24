@@ -70,7 +70,7 @@ class LineGraph:
     #     self._is_there_a_plottable_mtrx = bool
 
 
-    def init(self, guesses, true_vals, time, cycle_num, set_boundry_val, solutions):
+    def init(self, guesses, true_vals, time, cycle_num, set_boundry_val, solutions, signal_err):
         a11s, a12s, a21s, a22s = guesses
         a11, a12, a21, a22 = true_vals
         total_err_steps = []
@@ -107,6 +107,7 @@ class LineGraph:
                 self.display_rel_err(time, a21_rel_err, a22_rel_err, true_vals, cycle_num, "bad")
                 self.display_sol_xy(solutions, true_vals, cycle_num, "bad")
                 self.display_sol_t(time, solutions, true_vals, cycle_num, "bad")
+                self.display_signal_err(time, signal_err, true_vals, cycle_num, "bad")
                 # self.set_is_there_a_plottable_mtrx(True)
                 return True
 
@@ -116,6 +117,7 @@ class LineGraph:
                 self.display_rel_err(time, a21_rel_err, a22_rel_err, true_vals, cycle_num, "good")
                 self.display_sol_xy(solutions, true_vals, cycle_num, "good")
                 self.display_sol_t(time, solutions, true_vals, cycle_num, "good")
+                self.display_signal_err(time, signal_err, true_vals, cycle_num, "good")
                 # self.set_is_there_a_plottable_mtrx(True)
                 return True
 
@@ -241,22 +243,23 @@ class LineGraph:
         pp_type = self.get_pp_type()
         fig, ax = plt.subplots()
         fig.set_size_inches(16, 8)
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        # ax.xaxis.zoom(3)
+        ax.set_xlabel("X and XT")
+        ax.set_ylabel("Y and YT")
+
         ax.plot(x, y, label = "True Sol" , color="green")
         ax.plot(xt, yt, label = "Est. Sol", color="red" )
         print("x, y:", x[-1], y[-1])
         print("xt, yt:", xt[-1], yt[-1])
+        # print("True:", len(x), len(xt))
+        # print("Est:", len(y), len(yt))
 
         # For file title
         a11, a12, a21, a22 = true_vals
         a11_str, a12_str = self.format_fl_vals(a11), self.format_fl_vals(a12)
         a21_str, a22_str = self.format_fl_vals(a21), self.format_fl_vals(a22)
-        true_vals_str = "[" + a11_str +", " + a12_str + ", "+ a21_str +", " + a22_str + "]"
-        title = ev_type.upper()+ " | " + pp_type.upper() + " - MTRX " + str(cycle_num) + " : " + true_vals_str
+        true_vals_str = "[" + a11_str + ", " + a12_str + ", " + a21_str + ", " + a22_str + "]"
+        title = ev_type.upper() + " | " + pp_type.upper() + " - MTRX " + str(cycle_num) + " : " + true_vals_str
         ax.set_title(label = title, pad = 20)
-
 
         # Output IMG files
         ev_pp_type = self.get_ev_type() + "_" + self.get_pp_type()
@@ -265,7 +268,6 @@ class LineGraph:
         ax.legend(loc = "best", bbox_to_anchor = (1, 0.5))
         os.makedirs(subdir, exist_ok = True)
         fig.savefig(subdir + filename + "_mtrx_" + str(cycle_num) + ".png", dpi = 300)
-        # plt.close(fig)
         plt.minorticks_on()
         plt.close('all')
 
@@ -274,7 +276,6 @@ class LineGraph:
 
     def smallest_list_length(self, list_1, list_2):
         return min(len(list_1), len(list_2))
-
 
 
     def display_sol_t(self, time, solutions, true_vals, cycle_num, mtrx_type):
@@ -294,6 +295,7 @@ class LineGraph:
         ax_1.plot(time_x, xt, label = "xt")
         ax_1.legend(loc = "best")
 
+
         # For y and yt
         ax_2.set_ylabel("y and yt")
         ax_2.set_xlabel("Time")
@@ -302,7 +304,6 @@ class LineGraph:
         ax_2.plot(time_y, y, label = "y")
         ax_2.plot(time_y, yt, label = "yt")
         ax_2.legend(loc = "best")
-
 
         #For title
         a11, a12, a21, a22 = true_vals
@@ -317,6 +318,41 @@ class LineGraph:
         ev_pp_type = self.get_ev_type() + "_" + self.get_pp_type()
         subdir = "../output/" + ev_pp_type + "_" + self.get_date_str() + "/sol_graph_t/sol_graph_t" + "_" + mtrx_type + "/"
         filename = "sol_graph_t" + "_" + ev_pp_type
+        # ax_1.legend(loc = "best", bbox_to_anchor=(1, 0.5))
+        os.makedirs(subdir, exist_ok = True)
+        fig.savefig(subdir + filename + "_mtrx_" + str(cycle_num) + ".png", dpi = 300)
+        plt.minorticks_on()
+        plt.close('all')
+
+
+    def display_signal_err(self, time, signal_err, true_vals, cycle_num, mtrx_type):
+        x_signal_err_list, y_signal_err_list = signal_err
+        ev_type = self.get_ev_type()
+        pp_type = self.get_pp_type()
+        fig, ax = plt.subplots()
+        fig.set_size_inches(16, 8)
+        ax.set_ylabel("Signal Error")
+        ax.set_xlabel("Time")
+        min_signal_err = self.smallest_list_length(x_signal_err_list, y_signal_err_list)
+        time_trunc = self.truncate_list(time, min_signal_err)
+        ax.plot(time_trunc, x_signal_err_list, label = "X Signal Err")
+        ax.plot(time_trunc, y_signal_err_list, label = "Y Signal Err")
+        ax.legend(loc = "best")
+        # ax.set_xscale("log")
+
+        #For title
+        a11, a12, a21, a22 = true_vals
+        a11_str, a12_str = self.format_fl_vals(a11), self.format_fl_vals(a12)
+        a21_str, a22_str = self.format_fl_vals(a21), self.format_fl_vals(a22)
+        true_vals_str = "[" + a11_str + ", " + a12_str + ", " + a21_str + ", " + a22_str + "]"
+        title = ev_type.upper()+ " | " + pp_type.upper() + " - MTRX " + str(cycle_num) + " : " + true_vals_str
+        # ax.set_title(label = title, pad = 20)
+        fig.suptitle(title)
+
+        # Output IMG files
+        ev_pp_type = self.get_ev_type() + "_" + self.get_pp_type()
+        subdir = "../output/" + ev_pp_type + "_" + self.get_date_str() + "/signal_err_graph/signal_err_graph" + "_" + mtrx_type + "/"
+        filename = "signal_err_graph" + "_" + ev_pp_type
         # ax_1.legend(loc = "best", bbox_to_anchor=(1, 0.5))
         os.makedirs(subdir, exist_ok = True)
         fig.savefig(subdir + filename + "_mtrx_" + str(cycle_num) + ".png", dpi = 300)

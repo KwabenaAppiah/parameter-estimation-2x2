@@ -18,93 +18,16 @@ and its predecessor, please check here: https://github.com/taylorbn/linear_nudgi
 
 HOW DO I RUN THIS SCRIPT?
 
-There are two command line prompt options:
+There are two command line prompt format options:
 
 Option 1: 
 python parameter_estimation.py EV_TYPE PP_TYPE MU_VAL RLX_TIME BND_VAL LOOP_LIM
-python parameter_estimation.py rde sink 100 10 12 10 (Sample prompt)
+python parameter_estimation.py ce sp_sink 10000 10 12 200 (Sample prompt)
 
 Option 2: 
 python parameter_estimation.py MU_VAL RLX_TIME FILE_IMPORT
-python parameter_estimation.py 100 10 ../import/ce_sp_sink_all_matrices.txt (Sample prompt)
+python parameter_estimation.py 100 10 ../import/ce_sp_sink_all_matrices.txt
+* NOTE: There must be a file within the 'import' directory in order to run this command.
 
 
-EV_TYPE (eigenvalue type) and PP_TYPE (phase portrait type):
-
-
-1. rde = real distinct eigenvalues
-- saddle
-- source
-- sink
-
-
-2. re = repeated eigenvalues
-- sink
-- source
-
-Note: Currently there’s an issue with the trace-determinant graph for these two areas.
-
-
-3. ce =  complex eigenvalues
-- sp_sink = Spiral sink, 
-- sp_source = spiral source
-- center
-
-
-MU_VAL (µ)
-- The nudging parameter
-
-RLX_TIME: 
-- Relaxation time
-
-BND_VAL: 
-- Bound Val, or the boundaries of which the randomly generated matrix values are pulled from.
-Thus, the sample line above would cover a boundary from -5 to 5, inclusive.
-Note: When the BND_VAL is increased, the algorithm starts to perform poorly.
-Thus, as of now, a bound value of 5 is recommended for testing purposes.  
-
-
-LOOP_LIM: 
-- The total number of randomly generated matrices of which the nudging algorithm will be applied to.
-
-FILE_IMPORT
-- An imported text file that contains a list of matrices and their average relative parameter error.
-
-
---------------------------------------------------------------------------------------------------
-
-
-WHAT DOES THIS SCRIPT OUTPUT?
-
-This script outputs four types of documents into a folder called output (which is generated dynamically if non-existent).
-Please note, the filenames may change depending on the eigenvalue and phase portrait of the matrices.
-
-1. tr_det_graph.png
-
-- A graph of the trace-determinant plane with each randomly generated matrix represented by a colored dot.
-Moreover, the color of these dots are representative of each matrix’s average relative error. Currently, this is the only
-graphic that visualizes all of the matrices generated.
-
-2a. all_matricies.txt
-
-- A complete list of randomly generated matricies irregardless of their average relative error threshold. 
-
-2b. bad_matricies.txt
-
-- A list of "bad matricies" below a certain average relative error threshold.
-
-2c. good_matricies.txt
-
-- A list of "good matricies" above a certain average relative error threshold.
-
-3. line_graph_indv.png
-
-- An individual line graph for each matrix with a certain average relative error threshold.
-
-4. line_graph_comp.png
-
-- A composite line graph that contains all of the bad matrices produced. Moreover, the content
-found here should mirror that of the content found in bad_matricies.txt.
-
-
-Updated 2023.03.26 - 23:53
+Updated 2023.06.30 - 01:40

@@ -30,4 +30,14 @@ python parameter_estimation.py 100 10 ../import/ce_sp_sink_all_matrices.txt
 * NOTE: There must be a file within the 'import' directory in order to run this command.
 
 
+
+--------------------------------------------------------------------------------------------------
+
+
+WHAT DOES THIS SCRIPT OUTPUT?
+
+- TBD 
+
+
+--------------------------------------------------------------------------------------------------
 Updated 2023.06.30 - 01:40

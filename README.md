@@ -14,8 +14,8 @@ HOW DO I RUN THIS SCRIPT?
 There are two command line prompt format options:
 
 Option 1: 
-python parameter_estimation.py EV_TYPE PP_TYPE MU_VAL RLX_TIME BND_VAL LOOP_LIM
-python parameter_estimation.py ce sp_sink 10000 10 12 200 (Sample prompt)
+python parameter_estimation.py EV_TYPE PP_TYPE MU_VAL RLX_TIME BND_VAL LOOP_LIM CASE_TYPE
+python parameter_estimation.py ce sp_sink 1000 .5 12 5 main_diagonal (Sample prompt)
 
 Option 2: 
 python parameter_estimation.py MU_VAL RLX_TIME FILE_IMPORT

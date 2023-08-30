@@ -157,25 +157,25 @@ When the nudging algorithm is applied to a given matrix, the average relative er
 
 
 
-ANTI-DIAGONAL
+Anti-Diagonal
 
 - rde saddle, rde sink, rde source
 
 
 
-LEFT COLUMN
+Left Column 
 
 - rde saddle, rde source
 
 
 
-MAIN DIAGONAL
+Main Diagonal
 
 - ce sp_sink, rde saddle, rde sink
 
 
 
-RIGHT COLUMN 
+Right Column 
 
 - ce sp_source
 

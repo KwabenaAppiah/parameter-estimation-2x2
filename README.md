@@ -132,13 +132,13 @@ Combined Graphs:
 
 
 Text Files:
-1. ..._all_ matrices.txt
+1. ... _all_ matrices.txt
 - A complete list of randomly generated matrices irregardless of their average relative error threshold. 
 
-2. ..._bad_matrices.txt
+2. ... _bad_matrices.txt
 - A list of "bad matrices" that fall below a certain average relative error threshold.
 
-3. ..._good_matrices.txt
+3. ... _good_matrices.txt
 - A list of "good matrices" that are above a certain average relative error threshold.
 
 --------------------------------------------------------------------------------------------------

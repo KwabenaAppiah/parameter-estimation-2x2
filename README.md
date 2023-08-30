@@ -156,20 +156,32 @@ OBSERVATIONS
 When the nudging algorithm is applied to a given matrix, the average relative error for the parameter recovery process is below 1e-12. However, in two cases, the average relative error was between 1e-12 and 1e-8. To further analyze these occurrences, we will modify the code to pinpoint the exact matrices. 
 
 ANTI-DIAGONAL
-rde saddle 
-rde sink
+
+rde saddle, 
+
+rde sink,
+
 rde source
+
 
 LEFT COLUMN
-rde saddle 
+
+rde saddle, 
+
 rde source
 
+
 MAIN DIAGONAL
+
 ce sp_sink, 
-rde saddle 
+
+rde saddle, 
+
 rde sink
 
+
 RIGHT COLUMN 
+
 ce sp source
 
 --------------------------------------------------------------------------------------------------

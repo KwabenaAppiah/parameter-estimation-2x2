@@ -175,7 +175,7 @@ Main Diagonal
 
 
 
-Right Column 
+Right Column
 
 - ce sp_source
 

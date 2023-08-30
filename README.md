@@ -1,22 +1,26 @@
 # parameter-estimation
 
  BACKGROUND
+
 Based on the findings of Elizabeth Carlson, Joshua Hudson and Adam Larios  (https://epubs.siam.org/doi/10.1137/19M1248583),
 this project utilizes a nudging algorithm for the purpose of parameter recovery in a 2 x 2 linear system.
 
 --------------------------------------------------------------------------------------------------
 
 HYPOTHESIS
+
 The nudging algorithm’s performance in recovering parameters in a given matrix are dependent on the dynamics of said matrix's solution.
 
 --------------------------------------------------------------------------------------------------
 
 TESTING
+
 In order to test this hypothesis, the nudging algorithm is applied to an unbiased sample of random matrices within the trace-determinant plane. In each case, this sample of matrices is pulled based on eight possible dynamical behaviors. 
 
 --------------------------------------------------------------------------------------------------
 
 HOW DO I RUN THIS SCRIPT?
+
 There are two command line prompt options:
 
 Option #1 - Generate a random sample of matrices:  

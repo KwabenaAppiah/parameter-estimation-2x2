@@ -163,15 +163,18 @@ rde saddle, rde sink, rde source
 
 
 
+
 LEFT COLUMN
 
 rde saddle, rde source
 
 
 
+
 MAIN DIAGONAL
 
 ce sp_sink, rde saddle, rde sink
+
 
 
 

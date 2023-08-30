@@ -177,7 +177,7 @@ ce sp_sink, rde saddle, rde sink
 
 RIGHT COLUMN 
 
-ce sp source
+ce sp_source
 
 --------------------------------------------------------------------------------------------------
 

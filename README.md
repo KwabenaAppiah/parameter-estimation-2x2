@@ -24,11 +24,15 @@ HOW DO I RUN THIS SCRIPT?
 There are two command line prompt options:
 
 Option #1 - Generate a random sample of matrices:  
+
 python parameter_estimation.py EV_TYPE PP_TYPE MU_VAL RLX_TIME BND_VAL LOOP_LIM CASE_TYPE 
+
 (E.g. python parameter_estimation.py ce sp_sink 1000 .5 12 5 main_diagonal)
 
 Option #2 - Pull from an existing list of matrices: 
+
 python parameter_estimation.py MU_VAL RLX_TIME FILE_IMPORT 
+
 (E.g. python parameter_estimation.py 1000 .5 main_diagonal ../import/ce_sp_sink_all_matrices.txt)
 
 * NOTE: 

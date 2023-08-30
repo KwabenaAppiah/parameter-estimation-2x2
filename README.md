@@ -150,4 +150,28 @@ Text Files:
 - A list of "good matrices" that are above a certain average relative error threshold.
 
 --------------------------------------------------------------------------------------------------
-Updated 2023.08.30 - 01:50
+
+OBSERVATIONS
+
+When the nudging algorithm is applied to a given matrix, the average relative error for the parameter recovery process is below 10^−12. However, in two cases, the average relative error was between 10^−12 and 10^−8. To further analyze these occurrences, we will modify the code to pinpoint the exact matrices. 
+
+ANTI-DIAGONAL
+rde saddle 
+rde sink
+rde source
+
+LEFT COLUMN
+rde saddle 
+rde source
+
+MAIN DIAGONAL
+ce sp_sink, 
+rde saddle 
+rde sink
+
+RIGHT COLUMN 
+ce sp source
+
+--------------------------------------------------------------------------------------------------
+
+Updated 2023.08.30 - 16:54

@@ -99,7 +99,7 @@ class NonLineGraph:
         self._ev_fig, self._ev_ax = plt.subplots()
         param_label_1, param_label_2 = self.get_static_vars_dict_elt("param_label_1"), self.get_static_vars_dict_elt("param_label_2")
         graph_description = "Avg. Relative Error of " + param_label_1 + " and " + param_label_2
-        title = ev_type.upper() + " | " + pp_type.upper() + " | " + case_type.upper() + " | BNDS " + bounds + " | " + loop_limit + " cc | " + graph_description
+        title = ev_type.upper() + " | " + pp_type.upper() + " | " + case_type.upper() + " | BNDS " + bounds + " | " + loop_limit + " CC | " + graph_description
         self._ev_ax.set_title(label = title, pad = 30, fontsize = 15)
         self._ev_ax.set_xlabel("$\u03BB_{1}$", loc = "right", fontsize = 14)
         self._ev_ax.set_ylabel("$\u03BB_{2}$", loc = "top", fontsize = 14)
@@ -131,7 +131,7 @@ class NonLineGraph:
         param_label_2 = self.get_static_vars_dict_elt("param_label_2")
 
         graph_description = "Avg. Relative Error of " + param_label_1 + " and " + param_label_2
-        title = ev_type.upper() + " | " + pp_type.upper() + " | " + case_type.upper() + " | BNDS " + bounds + " | " + loop_limit + " cc | " + graph_description
+        title = ev_type.upper() + " | " + pp_type.upper() + " | " + case_type.upper() + " | BNDS " + bounds + " | " + loop_limit + " CC | " + graph_description
         self._td_ax.set_title(label = title, pad = 30, fontsize = 15)
         self._td_ax.set_xlabel("Tr", loc = "right", fontsize = 14)
         self._td_ax.set_ylabel("Det", loc = "top", fontsize = 14)
@@ -321,7 +321,7 @@ class NonLineGraph:
         filename = "ev_graph" + "_" + ev_and_pp_type + "_" + loop_limit + "_" + "cc"
         subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" + self.get_date_str() + "/"
         os.makedirs(subdir, exist_ok = True)
-        fig.savefig(subdir + filename + ".png", dpi = 300)
+        fig.savefig(subdir + filename + ".jpg", dpi = 300)
         plt.close(fig)
 
 
@@ -359,12 +359,11 @@ class NonLineGraph:
         filename = "tr_det_graph" + "_" + ev_and_pp_type + "_" + loop_limit + "_" + "cc"
         subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" + self.get_date_str() + "/"
         os.makedirs(subdir, exist_ok = True)
-        fig.savefig(subdir + filename + ".png", dpi = 300)
+        fig.savefig(subdir + filename + ".jpg", dpi = 300)
         plt.close(fig)
 
 
     def display_pie_graph(self, ev_type, pp_type, case_type, loop_limit, bounds):
-
         v1 = self.get_err_count_dict_elt("under_range_1") # under_1e-12
         v2 = self.get_err_count_dict_elt("over_range_1") # over_1e-12
         v3 = self.get_err_count_dict_elt("over_range_2") # over_1e-8
@@ -408,12 +407,12 @@ class NonLineGraph:
 
         # For file output
         graph_description = "Avg. Relative Error of " + param_label_1 + " and " + param_label_2
-        title = ev_type.upper() + " | " + pp_type.upper() + " | " + case_type.upper() + " | BNDS " + bounds + " | " + loop_limit + " cc | " + graph_description
+        title = ev_type.upper() + " | " + pp_type.upper() + " | " + case_type.upper() + " | BNDS " + bounds + " | " + loop_limit + " CC | " + graph_description
         fig.suptitle(title, fontsize = 15)
         ev_and_pp_type = ev_type + "_" + pp_type
         subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" +  self.get_date_str() + "/"
         filename = 'pie_graph' + "_" + ev_and_pp_type + "_" + loop_limit + "_" + "cc"
-        fig.savefig(subdir + filename + ".png", dpi = 300)
+        fig.savefig(subdir + filename + ".jpg", dpi = 300)
         plt.close(fig)
 
 
@@ -453,10 +452,10 @@ class NonLineGraph:
 
         # For Output
         graph_description = "Avg. Relative Error of " + param_label_1 + " and " + param_label_2
-        title = ev_type.upper() + " | " + pp_type.upper() + " | " + case_type.upper() + " | BNDS " + bounds + " | " + loop_limit + " cc | " + graph_description
+        title = ev_type.upper() + " | " + pp_type.upper() + " | " + case_type.upper() + " | BNDS " + bounds + " | " + loop_limit + " CC | " + graph_description
         fig.suptitle(title, fontsize = 15)
         ev_and_pp_type = ev_type + "_" + pp_type
         subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" +  self.get_date_str() + "/"
         filename = 'bar_graph'+ "_" + ev_and_pp_type + "_" + loop_limit + "_" + "cc"
-        plt.savefig(subdir + filename + '.png', dpi = 300)
+        plt.savefig(subdir + filename + '.jpg', dpi = 300)
         plt.close(fig)

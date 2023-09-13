@@ -2,10 +2,15 @@ from line_graph import LineGraph
 from non_line_graph import NonLineGraph
 from matrix_2x2 import Matrix_2x2
 import numpy as np
-
+import datetime
+import time
+import sys
+import os
 
 class LinearNudgingAlg:
     def __init__(self, *args):
+        self._report_subdir = ""
+        self._report_filename = ""
         self.prepare_sim(args)
 
     def prepare_sim(self, args):
@@ -14,17 +19,43 @@ class LinearNudgingAlg:
         matrix_estimates = []
         file_import_path = ""
 
+
         if len(args) == 6:
             file_import_path = args[5]
             matrix_estimates = self.text_file_to_mtrx_estimates(file_import_path)
             loop_limit = len(matrix_estimates)
 
-
         elif len(args) == 7:
             bound_value = args[5]
             loop_limit =  args[6]
 
+        self.set_report_subdir(ev_type, pp_type, case_type, self.get_date_str())
+        self.set_report_filename(ev_type, pp_type)
         self.init_sim(ev_type, pp_type, mu_value, relax_time, bound_value, matrix_estimates, loop_limit, case_type)
+
+    # ---- Setters -------------------------------------
+
+    def set_report_subdir(self, ev_type, pp_type, case_type, curr_date):
+        self._report_subdir = "../output/" + ev_type + "_" + pp_type + "_" + case_type + "_" + curr_date + "/text_files/"
+
+    def set_report_filename(self, ev_type, pp_type):
+        self._report_filename = ev_type + "_" + pp_type + "_report"
+
+    # ---- Getters -------------------------------------
+
+    def get_report_subdir(self):
+        return self._report_subdir
+
+    def get_report_filename(self):
+        return self._report_filename
+
+
+    def get_date_str(self):
+        raw_date = datetime.datetime.now()
+        t = time.localtime()
+        date_str = str(raw_date.year) + "."+ str(time.strftime("%m"))+ "." + str(time.strftime("%d"))
+        return date_str
+
 
     def init_sim(self, ev_type, pp_type, mu_value, relax_time, bound_value, matrix_estimates, loop_limit, case_type):
 
@@ -32,15 +63,12 @@ class LinearNudgingAlg:
         threshold_vals = [1e-12, 1e-8, 1e-4, 1e-1]
         line_graph = LineGraph(ev_type, pp_type, [-bound_value, bound_value], loop_limit, case_type)
         non_line_graph = NonLineGraph(ev_type, pp_type, [-bound_value, bound_value], loop_limit, case_type, threshold_vals)
-        # threshold = 1e-8 # Values below this threshold are considered bad, while values above are considered good
-        threshold = threshold_vals[1] #I.e. 1e-8, Values below this threshold are considered bad, while values above are considered good
+        non_optimal_threshold = threshold_vals[0] #I.e. 1e-12, Values above this threshold are considered non-optimal, while values below are considered optimal. Previously 1e-8
 
         i = 0
         while i < loop_limit:
-            print("\n" + "-------- MATRIX:", i, "---------------------------------------------------------------------------------------------" + "\n")
-            # # Initialize Matrix
-            # A = self.generate_matrix(2, bound_value)
-            # print("Matrix type:", self.classify_matrix(A), "\n")
+            self.custom_print("\n" + "-------- MATRIX:", i, "---------------------------------------------------------------------------------------------" + "\n")
+            # Initialize Matrix
 
             if matrix_estimates: # check if matrix_estimates is empty
                 a11, a12, a21, a22 = matrix_estimates[i][0][0], matrix_estimates[i][0][1], matrix_estimates[i][1][0], matrix_estimates[i][1][1]
@@ -97,18 +125,15 @@ class LinearNudgingAlg:
             # Initialize system
             x_0, y_0, xt_0, yt_0 = 1, 1, 3, 3
             S = np.array([[x_0, y_0, xt_0, yt_0]])  # Each new solution point makes a new row
-            U = np.array([[S[0, 2] - S[0, 0], S[0, 3] - S[0, 1]]])  # Signal error terms: U = [u, v] = [xt - x, yt - y]
+            U = np.array([ [  S[0, 2] - S[0, 0], S[0, 3] - S[0, 1]  ] ])  # Signal error terms: U = [u, v] = [xt - x, yt - y]
 
             # Run the algorithm
-            S_lists, U_lists, U_lists_abs_err,  param_estimates, update_times, param_errors, avg_param_errors = self.nuding_algorithm(A, At, t, dt, T_R, param_estimates, update_times, S, M, U, case_type)
-            line_graph.organize_data(t, update_times, A, param_estimates, param_errors, avg_param_errors, i, threshold, S_lists, U_lists_abs_err)
+            S_lists, U_lists_err, U_lists_abs_err, U_lists_rel_err,  param_estimates, update_times, param_errors, avg_param_errors = self.nuding_algorithm(A, At, t, dt, T_R, param_estimates, update_times, S, M, U, case_type)
+            line_graph.organize_data(t, update_times, A, param_estimates, param_errors, avg_param_errors, i, non_optimal_threshold, S_lists, (U_lists_abs_err, U_lists_rel_err))
             non_line_graph.organize_data(A, param_estimates, avg_param_errors, trace_A, det_A, case_type)
             i = i + 1
 
-        print("\n" + "-------- END SIMULATION ---------------------------------------------------------------------------------------------" + "\n")
-
-        # trace_det_graph.display(ev_type, pp_type, case_type, loop_limit)
-        # ev_graph.display(ev_type, pp_type, case_type, loop_limit)
+        self.custom_print("\n" + "-------- END SIMULATION ---------------------------------------------------------------------------------------------" + "\n")
         non_line_graph.display(ev_type, pp_type, case_type, loop_limit)
 
     def F(self, t, A, At, S, M, U):
@@ -117,6 +142,7 @@ class LinearNudgingAlg:
         S_dot = np.append(X_dot, Xt_dot)
         return S_dot
 
+
     def nuding_algorithm(self, A, At, t, dt, T_R, param_estimates, update_times, S, M, U, case_type):
         a11_update_times, a12_update_times, a21_update_times, a22_update_times  = update_times
         a11_estimates, a12_estimates, a21_estimates, a22_estimates = param_estimates
@@ -124,20 +150,65 @@ class LinearNudgingAlg:
         a11, a12, a21, a22 = A[0, 0], A[0, 1], A[1, 0], A[1, 1]
         mu_11, mu_12, m_21, mu_22 = M[0, 0], M[0, 1], M[1, 0], M[1, 1]
 
-        a11_err, a12_err = [a11_estimates[0] - a11], [a12_estimates[0] - a12]
-        a21_err, a22_err = [a21_estimates[0] - a21], [a22_estimates[0] - a22]
+        # Error
+        a11_err, a12_err, a21_err, a22_err = [], [], [], []
+        a11_err.append(a11_estimates[0] - a11)
+        a12_err.append(a12_estimates[0] - a12)
+        a21_err.append(a21_estimates[0] - a21)
+        a22_err.append(a22_estimates[0] - a22)
 
-        a11_abs_err, a12_abs_err = [abs(a11_err[0])], [abs(a12_err[0])]
-        a21_abs_err, a22_abs_err = [abs(a21_err[0])], [abs(a22_err[0])]
+        # Absolute error
+        a11_abs_err, a12_abs_err, a21_abs_err, a22_abs_err = [], [], [], []
+        a11_abs_err.append(abs(a11_err[0]))
+        a12_abs_err.append(abs(a12_err[0]))
+        a21_abs_err.append(abs(a21_err[0]))
+        a22_abs_err.append(abs(a22_err[0]))
 
-        a11_rel_err, a12_rel_err = [abs(a11_err[0] / a11)],  [abs(a12_err[0] / a12)]
-        a21_rel_err, a22_rel_err  =[abs(a21_err[0] / a21)], [abs(a22_err[0] / a22)]
+        # Relative error
+        a11_rel_err, a12_rel_err, a21_rel_err, a22_rel_err = [], [], [], []
+        a11_rel_err.append(abs(a11_err[0] / a11))
+        a12_rel_err.append(abs(a12_err[0] / a12))
+        a21_rel_err.append(abs(a21_err[0] / a21))
+        a22_rel_err.append(abs(a22_err[0] / a22))
 
+        # Estimates
+        x_estimates, y_estimates, xt_estimates, yt_estimates = [], [], [], []
+        x_estimates.append(S[0, 0])
+        y_estimates.append(S[0, 1])
+        xt_estimates.append(S[0, 2])
+        yt_estimates.append(S[0, 3])
 
-        x_estimates, y_estimates, xt_estimates, yt_estimates = [S[0, 0]], [S[0, 1]], [S[0, 2]], [S[0, 3]]
         U1_indx_j = S1_indx_j = At1_indx_i = At1_indx_j = U2_indx_j = S2_indx_j = At2_indx_i = At2_indx_j = -1
-        x_sig_err_estimates, y_sig_err_estimates = [U[0, 0]], [U[0, 1]]
-        x_sig_abs_err_estimates, y_sig_abs_err_estimates = [abs(U[0, 0])], [abs(U[0, 1])]
+
+        # Signal error
+        x_sig_err_estimates, y_sig_err_estimates = [], []
+        x_sig_err_estimates.append(U[0, 0])
+        y_sig_err_estimates.append(U[0, 1])
+
+        x_sig_abs_err_estimates, y_sig_abs_err_estimates = [], []
+        x_sig_abs_err_estimates.append(abs(U[0, 0]))
+        y_sig_abs_err_estimates.append(abs(U[0, 1]))
+
+        x_sig_rel_err_estimates, y_sig_rel_err_estimates = [], []
+        x_sig_rel_err_estimates.append(abs(U[0, 0] / S[0, 0]))
+        y_sig_rel_err_estimates.append(abs(U[0, 1] / S[0, 1]))  # [abs(xt - x / x), abs(yt - y/ y)]
+
+        # a11_err, a12_err = [a11_estimates[0] - a11], [a12_estimates[0] - a12]
+        # a21_err, a22_err = [a21_estimates[0] - a21], [a22_estimates[0] - a22]
+        #
+        # a11_abs_err, a12_abs_err = [abs(a11_err[0])], [abs(a12_err[0])]
+        # a21_abs_err, a22_abs_err = [abs(a21_err[0])], [abs(a22_err[0])]
+        #
+        # a11_rel_err, a12_rel_err = [abs(a11_err[0] / a11)],  [abs(a12_err[0] / a12)]
+        # a21_rel_err, a22_rel_err  =[abs(a21_err[0] / a21)], [abs(a22_err[0] / a22)]
+
+        # x_estimates, y_estimates, xt_estimates, yt_estimates = [S[0, 0]], [S[0, 1]], [S[0, 2]], [S[0, 3]]
+        # U1_indx_j = S1_indx_j = At1_indx_i = At1_indx_j = U2_indx_j = S2_indx_j = At2_indx_i = At2_indx_j = -1
+        # x_sig_err_estimates, y_sig_err_estimates = [U[0, 0]], [U[0, 1]]
+        # x_sig_abs_err_estimates, y_sig_abs_err_estimates = [abs(U[0, 0])], [abs(U[0, 1])]
+        # x_sig_rel_err_estimates, y_sig_rel_err_estimates = [abs(U[0, 0] / S[0, 0] )], [abs(U[0, 1] / S[0, 1])] # [abs(xt - x / x), abs(yt - y/ y)]
+
+        # Parameters
         param_1_update_times, param_2_update_times = [], []
         param_1_estimates, param_2_estimates = [], []
         param_1_err, param_2_err = [], []
@@ -227,6 +298,9 @@ class LinearNudgingAlg:
             x_sig_abs_err_estimates.append(abs(x_sig_err_estimates[-1]))
             y_sig_abs_err_estimates.append(abs(y_sig_err_estimates[-1]))
 
+            x_sig_rel_err_estimates.append(abs(x_sig_err_estimates[-1] / S[i, 0])) # New
+            y_sig_rel_err_estimates.append(abs(y_sig_err_estimates[-1] / S[i, 1])) # New
+
             #Calculate paramemter error
             param_1_err.append(param_1_estimates[-1] - param_1)
             param_2_err.append(param_2_estimates[-1] - param_2)
@@ -245,22 +319,57 @@ class LinearNudgingAlg:
         params = (param_1, param_2)
         update_times = (param_1_update_times, param_2_update_times)
 
-        self.print_alg_output(A, t, S, U, params, param_estimates, param_errors, update_times, case_type)
+        # self.print_alg_output(A, t, S, U, params, param_estimates, param_errors, update_times, case_type)
         S_lists = (x_estimates, y_estimates, xt_estimates, yt_estimates)
-        U_lists = (x_sig_err_estimates, y_sig_err_estimates)
+        U_lists_err = (x_sig_err_estimates, y_sig_err_estimates)
         U_lists_abs_err = (x_sig_abs_err_estimates, y_sig_abs_err_estimates)
+        U_lists_rel_err = (x_sig_rel_err_estimates, y_sig_rel_err_estimates)
 
         avg_abs_param_err = self.get_avg_list(param_1_abs_err, param_2_abs_err)
         avg_rel_param_err = self.get_avg_list(param_1_rel_err, param_2_rel_err)
         avg_param_errors = (avg_abs_param_err, avg_rel_param_err)
+        U_list_all = (U_lists_err, U_lists_abs_err, U_lists_rel_err)
+        self.print_alg_output(A, t, S, U, params, param_estimates, param_errors, update_times, S_lists, U_list_all, case_type)
 
-        return S_lists, U_lists, U_lists_abs_err, param_estimates, update_times, param_errors, avg_param_errors
+        return S_lists, U_lists_err, U_lists_abs_err, U_lists_rel_err, param_estimates, update_times, param_errors, avg_param_errors
 
 
-    def print_alg_output(self, A, t, S, U, params, param_estimates, param_errors, update_times, case_type):
+
+    def custom_print(self, *args, **kwargs):
+        # Print to the console
+        print(*args, **kwargs)
+
+        # Save to a text file
+        subdir = self.get_report_subdir()
+        filename = self.get_report_filename()
+        os.makedirs(subdir, exist_ok = True)
+        with open( subdir + filename + ".txt", "a") as output_file:  # Use "a" to append to the file
+            original_stdout = sys.stdout
+            sys.stdout = output_file
+            print(*args, **kwargs)  # Write to the file
+            sys.stdout = original_stdout  # Restore the original stdout
+
+
+    def print_alg_output(self, A, t, S, U, params, param_estimates, param_errors, update_times, S_lists, U_list_all, case_type):
+
+        # Parameters
         param_1_abs_err, param_2_abs_err, param_1_rel_err, param_2_rel_err = param_errors
         param_1_estimates, param_2_estimates = param_estimates
         param_1, param_2 = params
+
+        # Solutions
+        x_estimates, y_estimates, xt_estimates, yt_estimates =  S_lists
+
+        # Signal error
+        U_lists_err, U_lists_abs_err, U_lists_rel_err = U_list_all
+        x_sig_err_estimates, y_sig_err_estimates = U_lists_err
+        x_sig_abs_err_estimates, y_sig_abs_err_estimates = U_lists_abs_err
+        x_sig_rel_err_estimates, y_sig_rel_err_estimates = U_lists_rel_err
+
+
+        base_x, base_y = "x", "y"
+        tilde_char = "\u0303"  # Unicode combining tilde character
+        xt, yt = base_x + tilde_char, base_y + tilde_char # Combine the base character and the combining tilde character
 
         if(case_type == "main_diagonal"):
             param_1_label, param_2_label = "a11", "a22"
@@ -275,27 +384,62 @@ class LinearNudgingAlg:
             param_1_label, param_2_label = "a12", "a22"
 
 
-        print("Matrix:")
-        print(A, "\n" + "\n")
-
-        print(f"X = \n {S[:, 0:2]}\n")
-        print(f"Xt = \n {S[:, 2:]}\n", "\n" + "\n" )
+        # self.custom_print("Matrix:" + "\n")
+        # self.custom_print(A, "\n" + "\n")
+        self.custom_print(f"{A} \n \n")
 
         # Param 1
-        print("........", param_1_label, "........................................", "\n" )
-        print("True value =", param_1, "\n")
-        print("Final estimate =", param_1_estimates[-1], "\n")
-        print("Absolute error =", param_1_abs_err[-1], "\n")
-        print("Relative error =", param_1_rel_err[-1], "\n")
-        print("Total estimates = \n", param_1_estimates, "\n" + "\n")
+        self.custom_print("........", param_1_label, "....................................................................", "\n" )
+        self.custom_print("True parameter =", param_1, "\n")
+        self.custom_print("Estimated parameter =", param_1_estimates[-1], "\n")
+        self.custom_print("Absolute error =", param_1_abs_err[-1], "\n")
+        self.custom_print("Relative error =", param_1_rel_err[-1], "\n" + "\n")
+        # self.custom_print("Total estimates = \n", param_1_estimates, "\n" + "\n")
 
         # Param 2
-        print("........", param_2_label, ".......................................", "\n"  )
-        print("True value =", param_2, "\n")
-        print("Final estimate =", param_2_estimates[-1], "\n")
-        print("Absolute error =", param_2_abs_err[-1], "\n")
-        print("Relative error =", param_2_rel_err[-1], "\n")
-        print("Total estimates = \n", param_2_estimates, "\n" + "\n")
+        self.custom_print("........", param_2_label, "...................................................................", "\n"  )
+        self.custom_print("True parameter =", param_2, "\n")
+        self.custom_print("Estimated parameter =", param_2_estimates[-1], "\n")
+        self.custom_print("Absolute error =", param_2_abs_err[-1], "\n")
+        self.custom_print("Relative error =", param_2_rel_err[-1], "\n" + "\n")
+        # self.custom_print("Total estimates = \n", param_2_estimates, "\n" + "\n")
+
+        self.custom_print("........ Final solution values .................................................", "\n" )
+        self.custom_print(f" x = {x_estimates[-1]}\n")
+        self.custom_print(f" y = {y_estimates[-1]}\n")
+        self.custom_print(f" {xt} = {xt_estimates[-1]}\n")
+        self.custom_print(f" {yt} = {yt_estimates[-1]}\n \n")
+
+        self.custom_print("........ Final signal error for x and", xt ,"........................................", "\n" )
+        self.custom_print(f" Error = {x_sig_err_estimates[-1]}\n ")
+        self.custom_print(f" Absolute error =  {x_sig_abs_err_estimates[-1]} \n")
+        self.custom_print(f" Relative error =  {x_sig_rel_err_estimates[-1]} \n \n")
+
+        self.custom_print("........ Final signal error for y and", yt ,"........................................", "\n" )
+        self.custom_print(f" Error = {y_sig_err_estimates[-1]}\n ")
+        self.custom_print(f" Absolute error =  {y_sig_abs_err_estimates[-1]} \n")
+        self.custom_print(f" Relative error =  {y_sig_rel_err_estimates[-1]} \n \n")
+
+
+
+        #XXXxxxxxXXXxxxxxXXXxxxxxXXXxxxxxXXXxxxxxXXXxxxxxXXXxxxxxXXXxxxxxXXXxxxxx
+        # self.custom_print(f"x and y = \n {S[:, 0:2]}\n")  # actually prints X and Y
+        # self.custom_print(f"x = \n {S[:, 0:1]}\n")
+        # self.custom_print(f"y = \n {S[:, 1:2]}\n", "\n" + "\n" )
+
+        # self.custom_print(f"{xt} and {yt} = \n {S[:, 2:]}\n") # actually prints XT and YT
+        # self.custom_print(f"xt = \n {S[:, 2:3]}\n")
+        # self.custom_print(f"yt = \n {S[:, 3:]}\n")
+
+        # self.custom_print("........ Final solutions values ........................................", "\n" )
+        # self.custom_print(f"x = {S[-1, 0:1]} \n")
+        # self.custom_print(f"y = {S[-1, 1:2]} \n")
+        # self.custom_print(f"xt = {S[-1, 2:3]} \n")
+        # self.custom_print(f"yt = {S[-1, 3:]} \n")
+
+        # self.custom_print(f"Signal error (i.e. [x - {xt}, y - {yt}]) = \n {U}\n")
+        # self.custom_print(f"signal error for x  = \n {U[:, 0:1]}\n")
+        # self.custom_print(f"signal error for y = \n {U[:, 1:2]}\n")
 
 
     def get_avg_list(self, list_1, list_2):

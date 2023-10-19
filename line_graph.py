@@ -12,7 +12,8 @@ import subprocess  # For running external commands (Mov export)
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
-import imageio.v2 as imageio  # Import ImageIO v2 to avoid the Deprecation warning
+# import imageio.v2 as imageio  # Import ImageIO v2 to avoid the Deprecation warning
+import imageio
 import shutil
 
 
@@ -25,11 +26,10 @@ class LineGraph:
         self._has_non_optimal_matrices = False
         self._static_vars_dict = {
             'ev_type': ev_type, 'pp_type': pp_type, 'bounds': str(bounds), 'loop_limit': loop_limit, "case_type": case_type, "param_label_1": "", "param_label_2": ""
+
         }
         self.set_param_labels()
         # self.set_subplots_comp() 2023.09.09 hidden
-
-
 
     def set_param_labels(self):
         if self.get_static_vars_dict_elt("case_type") == "main_diagonal":
@@ -61,7 +61,7 @@ class LineGraph:
         static_args = (ev_type, pp_type, bounds, loop_limit, param_labels, case_type)
 
         curr_indx = str(curr_indx)
-        matrix_type = ""
+        optimality_type = ""
         was_content_plotted = False
 
         # Parameter stuff
@@ -74,74 +74,94 @@ class LineGraph:
         param_1 = param_2 = 0
         param_l_list, param_2_estimates = [], []
         avg_abs_param_err, avg_rel_param_err =  avg_param_errors
-        nth_avg_rel_param_err = avg_rel_param_err[-1]
-        linthresh_value = .000000000000001
 
+        linthresh_value = .000000000000001
         base_y = "y"
         base_x = "x"
         tilde_char = "\u0303"  # Unicode combining tilde character
-
         # Combine the base character and the combining tilde character
         yt = base_y + tilde_char
         xt = base_x + tilde_char
-
         assim_sol_chars = (xt, yt)
 
 
         if case_type == "main_diagonal":
             param_1, param_2 = a11, a22
 
-        elif(case_type == "anti-diagonal"):
+        elif case_type == "anti-diagonal":
             param_1, param_2 = a12, a21
 
-
-        elif(case_type == "left_column"):
+        elif case_type == "left_column":
             param_1, param_2 = a11, a21
 
-        elif(case_type == "right_column"):
+        elif case_type == "right_column":
             param_1, param_2 = a12, a22
 
 
-        if nth_avg_rel_param_err >= non_optimal_threshold:
-            matrix_type = "non-optimal"
-            # self.plot_graph_comp(total_avg_rel_param_err_list)
-            self.set_has_non_optimal_matrices_comp(True)
-            data_was_plotted = True
+        error_type = ["absolute", "relative"]
+        i = 0
+        while i < len(error_type):
 
-        elif nth_avg_rel_param_err < non_optimal_threshold:
-            matrix_type = "optimal"
-            data_was_plotted = True
+            if error_type[i] == "absolute":
+                nth_avg_param_err = avg_abs_param_err[-1]
+                U_list_err        = U_lists_abs_err
+                param_1_err, param_2_err = param_1_abs_err, param_2_abs_err
+                avg_param_error = avg_abs_param_err
 
-        else:
-            data_was_plotted = False
+            # else:
+            elif error_type[i] == "relative":
+                nth_avg_param_err = avg_rel_param_err[-1]
+                U_list_err = U_lists_rel_err
+                param_1_err, param_2_err = param_1_rel_err, param_2_rel_err
+                avg_param_error = avg_rel_param_err
 
-        # # Output regardless
-        self.write_to_file("mtrx_" + curr_indx + "|" + true_params_str, case_type, "all")
-        self.write_to_file("mtrx_" + curr_indx + "|" + true_params_str, case_type, matrix_type)
+            if nth_avg_param_err >= non_optimal_threshold:
+                optimality_type = "non-optimal"
+                self.set_has_non_optimal_matrices_comp(True)
+                was_content_plotted = True
 
-        # Parameter eror-based graphs
-        self.display_avg_param_err(t, static_args, true_params_title, avg_rel_param_err, curr_indx, linthresh_value, matrix_type,"relative")
-        self.display_avg_param_err(t, static_args, true_params_title, avg_abs_param_err, curr_indx, linthresh_value, matrix_type, "absolute")
-        self.display_sep_param_err(t, static_args, param_1_rel_err, param_2_rel_err, true_params_title, curr_indx, linthresh_value, matrix_type, "relative")
-        self.display_sep_param_err(t, static_args, param_1_rel_err, param_2_rel_err, true_params_title, curr_indx, linthresh_value, matrix_type, "absolute")
+            elif nth_avg_param_err < non_optimal_threshold:
+                optimality_type = "optimal"
+                was_content_plotted = True
 
-        # # # Solutions-based graphs
-        self.display_sol_xy_over_t(t, static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars, matrix_type)
-        self.display_sol_x(t, static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars, matrix_type)
-        self.display_sol_y(t, static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars, matrix_type)
-        self.display_sol_xy(static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars, True, matrix_type)
+            else:
+                was_content_plotted = False
 
-        self.display_sol_signal_err(t, static_args, U_lists_rel_err, true_params_title, curr_indx, linthresh_value, matrix_type, "relative")
-        self.display_sol_signal_err(t, static_args,  U_lists_abs_err, true_params_title, curr_indx, linthresh_value, matrix_type, "absolute")
-        self.display_sol_signal_err_split(t, static_args,  U_lists_rel_err, true_params_title, curr_indx, linthresh_value, matrix_type, "relative")
-        self.display_sol_signal_err_split(t, static_args, U_lists_abs_err, true_params_title, curr_indx, linthresh_value, matrix_type, "absolute")
+            # Error-based graphs
+            self.display_avg_param_err(t, static_args, true_params_title, avg_param_error, curr_indx, linthresh_value, error_type[i])
+            self.display_sep_param_err(t, static_args, param_1_err, param_2_err, true_params_title, curr_indx, linthresh_value,  error_type[i])
+            self.display_sol_signal_err(t, static_args, U_list_err, true_params_title, curr_indx, linthresh_value,  error_type[i])
+            self.display_sol_signal_err_split(t, static_args,  U_list_err, true_params_title, curr_indx, linthresh_value, error_type[i])
+            self.write_to_file("mtrx_" + curr_indx + "|" + true_params_str, case_type, optimality_type, error_type[i])
+            i = i + 1
+
+        # Non-error-based graphs
+        # self.write_to_file("mtrx_" + curr_indx + "|" + true_params_str, case_type, "all", "N/A")
+        self.write_to_file("mtrx_" + curr_indx + "|" + true_params_str, case_type)
+        self.display_sol_xy_over_t(t, static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars)
+        self.display_sol_x(t, static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars)
+        self.display_sol_y(t, static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars)
+        self.display_sol_xy(static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars, False)
+
         return was_content_plotted
 
-    def write_to_file(self, line_str, case_type, matrix_type):
+    def write_to_file(self, line_str, case_type, optimality_type = "all", error_type = "N/A"):
+        if error_type == "absolute":
+            err_label = "abs"
+        else:
+            err_label = "rel"
+
         output = line_str + "\n" + "\n"
         ev_and_pp_type = self.get_static_vars_dict_elt("ev_type") + "_" + self.get_static_vars_dict_elt("pp_type")
-        filename = ev_and_pp_type + "_" + matrix_type + "_matrices.txt"
-        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_"+ self.get_date_str() + "/text_files/"
+        if error_type == "N/A":
+            subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" + self.get_date_str() + "/text_files/"
+            filename = ev_and_pp_type + "_" + optimality_type + "_matrices.txt"
+        else:
+            subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" + self.get_date_str() + "/text_files/" + error_type + "_error/"
+            filename = ev_and_pp_type + "_" + err_label  + "_err_" + optimality_type + "_matrices.txt"
+
+
+
         os.makedirs(subdir, exist_ok = True)
         f = open(subdir + filename, "a")
         f.write(output)
@@ -151,29 +171,26 @@ class LineGraph:
         return "{:.5f}".format(val)
 
 
-    def display_avg_param_err(self, t, static_args, true_params_title, avg_param_err, curr_indx, linthresh_value, matrix_type, error_type):
+    def display_avg_param_err(self, t, static_args, true_params_title, avg_param_err, curr_indx, linthresh_value, error_type):
         err_label_1 = err_label_2 = ""
 
         if(error_type == "absolute"):
             err_label = "abs"
-            line_color = "brown"
+            line_color = "tomato"
 
         else:
             err_label = "rel"
-            line_color = "green"
+            line_color = "royalblue"
 
         ev_type, pp_type, bounds, loop_limit,  param_labels, case_type = static_args
         param_label_1, param_label_2 = param_labels
 
         fig, ax = plt.subplots()
         fig.set_size_inches(16, 8)
-        # ax.plot(t, avg_param_err, color = line_color, label = "Avg. " + err_label + " err: " + "\n"+ param_label_1 + " & " + param_label_2 )
         ax.plot(t, avg_param_err, color = line_color, label = param_label_1 + " & " + param_label_2 + ": \n" + "Avg. " + err_label + " err" )
         ax.set_xlabel("Time")
         ax.set_ylabel("Avg. " + error_type + " parameter error - " + param_label_1 + " & " +  param_label_2)
-        # ax.set_ylabel(param_label_1 + " & " +  param_label_2 + " - Avg. " + error_type + " parameter error")
         ax.set_xscale("log")
-        # ax.set_yscale("log")
         ax.set_yscale("symlog", linthresh = linthresh_value)
 
         title = ev_type.upper()+ " | " + pp_type.upper() + " | " + case_type.upper()  + " | BNDS " + bounds + " | MTRX " + curr_indx + " : " + true_params_title
@@ -182,7 +199,7 @@ class LineGraph:
         # Output image files
         # output_type = "indv"
         ev_and_pp_type = ev_type + "_" + pp_type
-        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_"+ self.get_date_str() + "/avg_param_err_graphs/" + error_type + "/" + matrix_type + "/"
+        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_"+ self.get_date_str() + "/avg_param_err_graphs/" + error_type + "_error/"
         filename = "avg_" + err_label + "_param_err_graph_" + ev_and_pp_type
         ax.legend(loc = 'center left', bbox_to_anchor = (1, 0.5))
         os.makedirs(subdir, exist_ok = True)
@@ -190,24 +207,26 @@ class LineGraph:
         plt.close('all')
 
 
-    def display_sep_param_err(self, t, static_args, param_1_err, param_2_err, true_params_title, curr_indx, linthresh_value, matrix_type,  error_type):
+    def display_sep_param_err(self, t, static_args, param_1_err, param_2_err, true_params_title, curr_indx, linthresh_value, error_type):
         ev_type, pp_type, bounds, loop_limit,  param_labels, case_type = static_args
         param_label_1, param_label_2 = param_labels
         err_label_1 = err_label_2 = ""
         if(error_type == "absolute"):
             err_label =  "abs"
+            line_color_1, line_color_2 = "tomato", "yellowgreen"
+
         else:
             err_label = "rel"
+            line_color_1, line_color_2 = "royalblue", "orange"
 
         fig, ax = plt.subplots()
         fig.set_size_inches(16, 8)
         ax.set_xlabel("Time")
         ax.set_ylabel(error_type.capitalize() + " parameter error - " + param_label_1 + " & " + param_label_2)
-        # ax.set_ylabel(param_label_1 + " & " + param_label_2  + " - " + error_type.capitalize() + " parameter error")
         ax.set_xscale("log")
         ax.set_yscale("symlog", linthresh = linthresh_value)
-        ax.plot(t, param_1_err, label = param_label_1 + " " + err_label + ". err." )
-        ax.plot(t, param_2_err, label = param_label_2 + " " + err_label + ". err." )
+        ax.plot(t, param_1_err, color = line_color_1, label = param_label_1 + " " + err_label + ". err." )
+        ax.plot(t, param_2_err, color = line_color_2, label = param_label_2 + " " + err_label + ". err." )
 
         # For title
         title = ev_type.upper()+ " | " + pp_type.upper() + " | " + case_type.upper() + " | BNDS " + bounds + " | MTRX " + curr_indx + " : " + true_params_title
@@ -215,33 +234,34 @@ class LineGraph:
 
         # Output img files
         ev_and_pp_type = ev_type + "_" + pp_type
-        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" + self.get_date_str() +  "/sep_param_err_graphs/" + error_type +  "/" + matrix_type + "/"
+        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" + self.get_date_str() +  "/sep_param_err_graphs/" + error_type +  "_error/"
 
-        filename = err_label + "_sep_param_err_graph_" + ev_and_pp_type
+        filename = "sep_"+ err_label + "_param_err_graph_" + ev_and_pp_type
         ax.legend(loc = 'center left', bbox_to_anchor = (1, 0.5))
         os.makedirs(subdir, exist_ok = True)
         fig.savefig(subdir + filename + "_mtrx_" + curr_indx + ".jpg", dpi = 300)
         plt.close('all')
 
 
-    def display_sol_xy(self, static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars, is_animation_on, matrix_type):
+    def display_sol_xy(self, static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars, is_animation_on):
         ev_type, pp_type, bounds, loop_limit,  param_labels, case_type = static_args
         x_estimates, y_estimates, xt_estimates, yt_estimates = S_lists
         fig, (ax_1, ax_2) = plt.subplots(1, 2)
         fig.set_size_inches(30, 15)
         label_font_size = 18
-        # is_animation_on = False
+
+        line_color_1, line_color_2 = "yellowgreen", "orange"
         xt, yt = assim_sol_chars
         ax_1.set_xlabel("x", fontsize = label_font_size)
         ax_1.set_ylabel("y", fontsize = label_font_size)
-        ax_1.plot(x_estimates, y_estimates, label = "True sol." , color = "green")
+        ax_1.plot(x_estimates, y_estimates, label = "True sol.", color = line_color_1)
         ax_1.set_xscale("symlog", linthresh = linthresh_value)
         ax_1.set_yscale("symlog", linthresh = linthresh_value)
         ax_1.legend(loc = "upper right")
 
         ax_2.set_xlabel(xt, fontsize = label_font_size)
         ax_2.set_ylabel(yt, fontsize = label_font_size)
-        ax_2.plot(xt_estimates, yt_estimates, label = "Est. sol.", color = "red" )
+        ax_2.plot(xt_estimates, yt_estimates, label = "Est. sol.", color = line_color_2)
         ax_2.set_xscale("symlog", linthresh = linthresh_value)
         ax_2.set_yscale("symlog", linthresh = linthresh_value)
         ax_2.legend(loc = "upper right")
@@ -253,16 +273,18 @@ class LineGraph:
 
         # Output IMG files
         ev_and_pp_type = ev_type + "_" + pp_type
-        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" + self.get_date_str() + "/sol_xy_graphs/" + matrix_type + "/"
+
+        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" + self.get_date_str() + "/sol_xy_graphs/"
         filename = "sol_xy_graph" + "_" + ev_and_pp_type + "_mtrx_" + curr_indx
 
         os.makedirs(subdir, exist_ok = True)
         fig.savefig(subdir + filename + ".jpg", dpi = 300)
 
-        if(is_animation_on == True and int(curr_indx) < 1 or matrix_type == "non-optimal"): #Only output an animation of the first matrix or a non-optimal matrix
+        # if(is_animation_on == True and int(curr_indx) < 1 or optimality_type == "non-optimal" and is_animation_on == True): #Only output an animation of the first matrix or a non-optimal matrix
+        if(is_animation_on == True and int(curr_indx) < 1): #Only output an animation of the first matrix or a non-optimal matrix
             animation_subdir = subdir + "animations/"
             os.makedirs(animation_subdir, exist_ok = True)
-            self.animation_output_1x2(x_estimates, y_estimates, xt_estimates, yt_estimates, linthresh_value, animation_subdir + filename, assim_sol_chars, title_specs )
+            self.animation_output_1x2(x_estimates, y_estimates, xt_estimates, yt_estimates, linthresh_value, animation_subdir + filename, assim_sol_chars, title_specs)
         plt.close('all')
 
 
@@ -273,6 +295,7 @@ class LineGraph:
         is_exporting_to_mp4 = True
         is_exporting_to_gif = False
         xt, yt = assim_sol_chars
+        ev_type   = self.get_static_vars_dict_elt('ev_type')
 
         # Initialize the figure and subplots
         fig, axes = plt.subplots(1, 2, figsize = (30, 15))
@@ -282,6 +305,8 @@ class LineGraph:
 
         # Create a directory to store the frames
         frames_dir = "temp_animation_frames"
+        line_color_1, line_color_2 = "yellowgreen", "orange"
+
 
         # Delete the directory if it already exists and recreate it
         if os.path.exists(frames_dir):
@@ -289,8 +314,13 @@ class LineGraph:
         os.makedirs(frames_dir)
 
         # Generate frames for the animation
+
         j = 0
-        mod_val = 20 #20 for the standard loop, # Set to 400 for debugging purposes, as it will provide for a shorter loop
+        if(ev_type =="ce"):
+            mod_val = 20 #20 for the standard loop, # Set to 400 for debugging purposes, as it will provide for a shorter loop
+        else:
+            mod_val = 100
+
         for i in range(num_frames):
             # Set up plots
             if i % mod_val == 0:
@@ -299,7 +329,7 @@ class LineGraph:
                 axes[0].set_ylabel('y')
                 axes[0].set_xscale('symlog', linthresh = linthresh_value)
                 axes[0].set_yscale('symlog', linthresh = linthresh_value)
-                axes[0].plot(x1[:i + 1], y1[:i + 1], color = 'g', label = "True sol." )
+                axes[0].plot(x1[:i + 1], y1[:i + 1], color = line_color_1, label = "True sol." )
                 axes[0].set_xlim(np.min(x1), np.max(x1))
                 axes[0].set_ylim(np.min(y1), np.max(y1))
 
@@ -308,7 +338,7 @@ class LineGraph:
                 axes[1].set_ylabel(yt)
                 axes[1].set_xscale('symlog', linthresh = linthresh_value)
                 axes[1].set_yscale('symlog', linthresh = linthresh_value)
-                axes[1].plot(x2[:i + 1], y2[:i + 1], color = 'r', label = "Est. sol.")
+                axes[1].plot(x2[:i + 1], y2[:i + 1], color = line_color_2, label = "Est. sol.")
                 axes[1].set_xlim(np.min(x2), np.max(x2))
                 axes[1].set_ylim(np.min(y2), np.max(y2))
 
@@ -421,20 +451,20 @@ class LineGraph:
         stop_event.set()
 
     #********** For Exporting gifs - END ***********************************/
-
-
-    def display_sol_xy_over_t(self, t, static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars, matrix_type):
+    def display_sol_xy_over_t(self, t, static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars):
+    # def display_sol_xy_over_t(self, t, static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars, optimality_type):
         ev_type, pp_type, bounds, loop_limit,  param_labels, case_type = static_args
         x_estimates, y_estimates, xt_estimates, yt_estimates = S_lists
         fig, (ax_1, ax_2) = plt.subplots(2, 1)
         fig.set_size_inches(16, 12)
         xt, yt = assim_sol_chars
+        line_color_1, line_color_2 = "yellowgreen", "orange"
 
         # For x and xt
         ax_1.set_ylabel("x and " + xt)
         ax_1.set_xlabel("Time")
-        ax_1.plot(t, x_estimates, label = "x")
-        ax_1.plot(t, xt_estimates, label = xt)
+        ax_1.plot(t, x_estimates, label = "x", color = line_color_1)
+        ax_1.plot(t, xt_estimates, label = xt, color = line_color_2)
         ax_1.legend(loc = "best")
         ax_1.set_xscale("log")
         ax_1.set_yscale("symlog", linthresh = linthresh_value)
@@ -442,8 +472,8 @@ class LineGraph:
         # For y and yt
         ax_2.set_ylabel("y and " + yt)
         ax_2.set_xlabel("Time")
-        ax_2.plot(t, y_estimates, label = "y")
-        ax_2.plot(t, yt_estimates, label = yt)
+        ax_2.plot(t, y_estimates, label = "y", color = line_color_1)
+        ax_2.plot(t, yt_estimates, label = yt, color = line_color_2)
         ax_2.legend(loc = "best")
         ax_2.set_xscale("log")
         ax_2.set_yscale("symlog", linthresh = linthresh_value)
@@ -455,25 +485,54 @@ class LineGraph:
 
         # Output IMG files
         ev_and_pp_type = ev_type + "_" + pp_type
-        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" + self.get_date_str() + "/sol_xy_over_t_graphs/" + matrix_type + "/"
+        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" + self.get_date_str() + "/sol_xy_over_t_graphs/"
         filename = "sol_xy_over_t_graph" + "_" + ev_and_pp_type
         os.makedirs(subdir, exist_ok = True)
         fig.savefig(subdir + filename + "_mtrx_" + curr_indx + ".jpg", dpi = 300)
         plt.close('all')
 
 
-    def display_sol_x(self, t, static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars, matrix_type):
+    def display_sol_x(self, t, static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars):
         ev_type, pp_type, bounds, loop_limit,  param_labels, case_type = static_args
         x_estimates, y_estimates, xt_estimates, yt_estimates = S_lists
         fig, ax = plt.subplots()
         fig.set_size_inches(16, 8)
+        line_color_1, line_color_2 = "yellowgreen", "orange"
 
         # For x and xt
         xt, yt = assim_sol_chars
         ax.set_ylabel("x and " + xt)
         ax.set_xlabel("Time")
-        ax.plot(t, x_estimates, label = 'x')
-        ax.plot(t, xt_estimates, label = xt)
+        ax.plot(t, x_estimates, label = 'x', color = line_color_1)
+        ax.plot(t, xt_estimates, label = xt, color = line_color_2)
+        ax.set_xscale('log')
+        ax.set_yscale('symlog', linthresh = linthresh_value)
+        ax.legend(loc = "best")
+        title = ev_type.upper() + " | " + pp_type.upper() + " | " + case_type.upper() + " | BNDS " + bounds + " | MTRX " + curr_indx + " : " + true_params_title
+        fig.suptitle(title, fontsize = 15)
+
+        # Output IMG files
+        ev_and_pp_type = ev_type + "_" + pp_type
+        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_"+ self.get_date_str() + "/sol_x_graphs/"
+        filename = "sol_x_graph" + "_" + ev_and_pp_type
+        os.makedirs(subdir, exist_ok = True)
+        fig.savefig(subdir + filename + "_mtrx_" + curr_indx + ".jpg", dpi = 300)
+        plt.close('all')
+
+
+    def display_sol_y(self, t, static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars):
+        ev_type, pp_type, bounds, loop_limit,  param_labels, case_type = static_args
+        x_estimates, y_estimates, xt_estimates, yt_estimates = S_lists
+        fig, ax = plt.subplots()
+        fig.set_size_inches(16, 8)
+        line_color_1, line_color_2 = "yellowgreen", "orange"
+
+        # For y and yt
+        xt, yt = assim_sol_chars
+        ax.set_ylabel("y and " + yt)
+        ax.set_xlabel("Time")
+        ax.plot(t, y_estimates, label = 'y', color = line_color_1)
+        ax.plot(t, yt_estimates, label = yt, color = line_color_2)
         ax.set_xscale('log')
         ax.set_yscale('symlog', linthresh = linthresh_value)
         ax.legend(loc = "best")
@@ -483,46 +542,20 @@ class LineGraph:
 
         # Output IMG files
         ev_and_pp_type = ev_type + "_" + pp_type
-        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_"+ self.get_date_str() + "/sol_x_graph/" + matrix_type + "/"
-        filename = "sol_x_graph" + "_" + ev_and_pp_type
-        os.makedirs(subdir, exist_ok = True)
-        fig.savefig(subdir + filename + "_mtrx_" + curr_indx + ".jpg", dpi = 300)
-        plt.close('all')
-
-
-    def display_sol_y(self, t, static_args, S_lists, true_params_title, curr_indx, linthresh_value, assim_sol_chars, matrix_type):
-        ev_type, pp_type, bounds, loop_limit,  param_labels, case_type = static_args
-        x_estimates, y_estimates, xt_estimates, yt_estimates = S_lists
-        fig, ax = plt.subplots()
-        fig.set_size_inches(16, 8)
-
-        # For y and yt
-        xt, yt = assim_sol_chars
-        ax.set_ylabel("y and " + yt)
-        ax.set_xlabel("Time")
-        ax.plot(t, y_estimates, label = 'y')
-        ax.plot(t, yt_estimates, label = yt)
-        ax.set_xscale('log')
-        ax.set_yscale('symlog', linthresh = linthresh_value)
-        ax.legend(loc = "best")
-
-        title = ev_type.upper()+ " | " + pp_type.upper() + " | " + case_type.upper() + " | BNDS " + bounds + " | MTRX " + curr_indx + " : " + true_params_title
-        fig.suptitle(title, fontsize = 15)
-
-        # Output IMG files
-        ev_and_pp_type = ev_type + "_" + pp_type
-        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" + self.get_date_str() + "/sol_y_graph/" + matrix_type + "/"
+        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" + self.get_date_str() + "/sol_y_graphs/"
         filename = "sol_y_graph" + "_" + ev_and_pp_type
         os.makedirs(subdir, exist_ok = True)
         fig.savefig(subdir + filename + "_mtrx_" + curr_indx + ".jpg", dpi = 300)
         plt.close('all')
 
 
-    def display_sol_signal_err(self, t, static_args, U_lists, true_params_title, curr_indx, linthresh_value,  matrix_type, error_type):
+    def display_sol_signal_err(self, t, static_args, U_lists, true_params_title, curr_indx, linthresh_value, error_type):
         if(error_type == "absolute"):
             err_label =  "abs"
+            line_color_1, line_color_2 = "tomato", "yellowgreen"
         else:
             err_label = "rel"
+            line_color_1, line_color_2 = "royalblue", "orange"
 
         ev_type, pp_type, bounds, loop_limit,  param_labels, case_type = static_args
         x_sig_err_estimates, y_sig_err_estimates = U_lists
@@ -530,8 +563,8 @@ class LineGraph:
         fig.set_size_inches(16, 8)
         ax.set_ylabel(error_type.capitalize() +  " signal error")
         ax.set_xlabel("Time")
-        ax.plot(t, x_sig_err_estimates, label = "x " + err_label + ". signal err.")
-        ax.plot(t, y_sig_err_estimates, label = "y " + err_label + ". signal err.")
+        ax.plot(t, x_sig_err_estimates, label = "x " + err_label + ". signal err.", color = line_color_1)
+        ax.plot(t, y_sig_err_estimates, label = "y " + err_label + ". signal err.", color = line_color_2)
         ax.legend(loc = "best")
         ax.set_xscale("log")
         ax.set_yscale("log")
@@ -542,7 +575,7 @@ class LineGraph:
 
         # Output IMG files
         ev_and_pp_type = ev_type + "_" + pp_type
-        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" + self.get_date_str() + "/sol_signal_err_graphs/" + error_type + "/" + matrix_type + "/"
+        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" + self.get_date_str() + "/sol_signal_err_graphs/" + error_type + "_error/"
         filename =  "sol_" + err_label + "_signal_err_graph_" + ev_and_pp_type
         os.makedirs(subdir, exist_ok = True)
         fig.savefig(subdir + filename + "_mtrx_" + curr_indx + ".jpg", dpi = 300)
@@ -550,11 +583,13 @@ class LineGraph:
 
 
 
-    def display_sol_signal_err_split(self, t, static_args, U_lists, true_params_title, curr_indx, linthresh_value, matrix_type, error_type):
+    def display_sol_signal_err_split(self, t, static_args, U_lists, true_params_title, curr_indx, linthresh_value, error_type):
         if(error_type == "absolute"):
             err_label =  "abs"
+            line_color_1, line_color_2 = "tomato", "yellowgreen"
         else:
             err_label = "rel"
+            line_color_1, line_color_2 = "royalblue", "orange"
 
         ev_type, pp_type, bounds, loop_limit,  param_labels, case_type = static_args
         x_sig_err_estimates, y_sig_err_estimates = U_lists
@@ -563,7 +598,7 @@ class LineGraph:
 
         ax_1.set_ylabel( error_type.capitalize() + " signal error")
         ax_1.set_xlabel("Time")
-        ax_1.plot(t, x_sig_err_estimates, label = "x " + err_label  + ". signal err.")
+        ax_1.plot(t, x_sig_err_estimates, label = "x " + err_label  + ". signal err.", color = line_color_1 )
 
         ax_1.legend(loc = "best")
         ax_1.set_xscale("log")
@@ -571,7 +606,7 @@ class LineGraph:
 
         ax_2.set_ylabel(error_type.capitalize() + " signal error")
         ax_2.set_xlabel("Time")
-        ax_2.plot(t, y_sig_err_estimates, label = "y " + err_label  + ". signal err.", color = "orange")
+        ax_2.plot(t, y_sig_err_estimates, label = "y " + err_label  + ". signal err.", color = line_color_2)
         ax_2.legend(loc = "best")
         ax_2.set_xscale("log")
         ax_2.set_yscale("log")
@@ -582,7 +617,7 @@ class LineGraph:
 
         # Output IMG files
         ev_and_pp_type = ev_type + "_" + pp_type
-        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" + self.get_date_str() + "/sol_signal_err_split_graphs/" + error_type + "/" + matrix_type + "/"
+        subdir = "../output/" + ev_and_pp_type + "_" + case_type + "_" + self.get_date_str() + "/sol_signal_err_split_graphs/" + error_type + "_error/"
         filename = "sol_" + err_label + "_signal_err_split_graph_" + ev_and_pp_type
         os.makedirs(subdir, exist_ok = True)
         fig.savefig(subdir + filename + "_mtrx_" + curr_indx + ".jpg", dpi = 300)
@@ -641,54 +676,3 @@ class LineGraph:
     #             sys.stdout.write(f"\r{loading_text}{'.' * i}   ")
     #             sys.stdout.flush()
     #             time.sleep(0.5)
-
-
-    # def plot_graph_comp(self, total_avg_param_err_list):
-    #     fig, ax = self.get_subplots_comp()
-    #     ax.plot(list(range(len(total_avg_param_err_list))), total_avg_param_err_list, label = "MX" + " " + str(self.get_static_vars_dict_elt("loop_limit")))
-
-
-    # def set_subplots_comp(self): 2023.09.09 hidden
-    #     true_params             = self.get_true_params_comp()
-    #     case_type   = self.get_static_vars_dict_elt("case_type")
-    #     ev_type               = self.get_static_vars_dict_elt("ev_type")
-    #     pp_type               = self.get_static_vars_dict_elt("pp_type")
-    #     bounds                = self.get_static_vars_dict_elt("bounds")
-    #     self._fig, self._ax = plt.subplots()
-    #     title = ev_type.upper() + " | " + pp_type.upper() + " | " + case_type.upper() + " | BNDS: " + bounds + " | Matrices w/ an Avg. Err. > 1e-5"
-    #     self._ax.set_xscale('log') # Iterations
-    #     self._ax.set_yscale('log') # Avg. Rel. Err
-    #     self._ax.set_title(label = title, pad = 25, fontsize = 15)
-    #     self._ax.set_xlabel("Iterations")
-    #     self._ax.set_ylabel("Avg. Error")
-    #     self._fig.set_size_inches(16, 8)
-
-
-
-    # def display_avg_param_err_comp(self, error_type):
-    #     if self.has_non_optimal_matrices_comp() != False:
-    #         err_label_1 = err_label_2 = ""
-    #         if(error_type == "absolute"):
-    #             err_label = "abs"
-    #         else:
-    #             err_label =  "rel"
-    #
-    #         true_params, ev_type, pp_type = self.get_true_params_comp(), self.get_static_vars_dict_elt("ev_type"), self.get_static_vars_dict_elt("pp_type")
-    #         fig, ax = self.get_subplots_comp()
-    #         ax.set_xscale("log")
-    #         ax.set_yscale("log")
-    #         ax.legend(loc = 'center left', bbox_to_anchor = (1, 0.5))
-    #
-    #         # Output files
-    #         output_type = "comp"
-    #         ev_and_pp_type = ev_type + '_' + pp_type
-    #         subdir =   "../output/" + ev_and_pp_type + "_" + case_type + "_"+ self.get_date_str() + "/"
-    #         filename =  "avg_rel" + err_label +"_param_err_graph" + "_" + ev_and_pp_type + "_" + output_type
-    #         os.makedirs(subdir, exist_ok = True)
-    #         fig.savefig(subdir + filename + ".jpg", dpi = 300)
-    #         plt.close(fig)
-    #
-    #     else:
-    #         fig, ax = self.get_subplots_comp()
-    #         plt.close(fig)
-    #         print("RESULT: No non-optimal matrices were found.")

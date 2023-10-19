@@ -60,10 +60,15 @@ class LinearNudgingAlg:
     def init_sim(self, ev_type, pp_type, mu_value, relax_time, bound_value, matrix_estimates, loop_limit, case_type):
 
         # Initialize display graphs
-        threshold_vals = [1e-12, 1e-8, 1e-4, 1e-1]
+        # threshold_vals = [1e-12, 1e-8, 1e-4, 1e-1]
+        threshold_vals = [1e-14, 1e-12, 1e-10, 1e-8]
+        bounds = [-bound_value, bound_value]
+        # line_graph_abs_err = LineGraph(ev_type, pp_type, [-bound_value, bound_value], loop_limit, case_type, "absolute")
+        # line_graph_rel_err = LineGraph(ev_type, pp_type, [-bound_value, bound_value], loop_limit, case_type, "relative")
         line_graph = LineGraph(ev_type, pp_type, [-bound_value, bound_value], loop_limit, case_type)
-        non_line_graph = NonLineGraph(ev_type, pp_type, [-bound_value, bound_value], loop_limit, case_type, threshold_vals)
-        non_optimal_threshold = threshold_vals[0] #I.e. 1e-12, Values above this threshold are considered non-optimal, while values below are considered optimal. Previously 1e-8
+        non_line_graph_abs_err = NonLineGraph(ev_type, pp_type, bounds, loop_limit, threshold_vals, case_type, "absolute")
+        non_line_graph_rel_err = NonLineGraph(ev_type, pp_type, bounds, loop_limit, threshold_vals, case_type, "relative")
+        non_optimal_threshold = threshold_vals[0] #I.e. 1e-14, Values above this threshold are considered non-optimal, while values below are considered optimal. Previously 1e-8 and then 1e-12
 
         i = 0
         while i < loop_limit:
@@ -130,11 +135,15 @@ class LinearNudgingAlg:
             # Run the algorithm
             S_lists, U_lists_err, U_lists_abs_err, U_lists_rel_err,  param_estimates, update_times, param_errors, avg_param_errors = self.nuding_algorithm(A, At, t, dt, T_R, param_estimates, update_times, S, M, U, case_type)
             line_graph.organize_data(t, update_times, A, param_estimates, param_errors, avg_param_errors, i, non_optimal_threshold, S_lists, (U_lists_abs_err, U_lists_rel_err))
-            non_line_graph.organize_data(A, param_estimates, avg_param_errors, trace_A, det_A, case_type)
+            # line_graph_rel_err.organize_data(t, update_times, A, param_estimates, param_errors, avg_param_errors, i, non_optimal_threshold, S_lists, (U_lists_abs_err, U_lists_rel_err))
+
+            non_line_graph_abs_err.organize_data(A, param_estimates, avg_param_errors, trace_A, det_A, case_type)
+            non_line_graph_rel_err.organize_data(A, param_estimates, avg_param_errors, trace_A, det_A, case_type)
             i = i + 1
 
         self.custom_print("\n" + "-------- END SIMULATION ---------------------------------------------------------------------------------------------" + "\n")
-        non_line_graph.display(ev_type, pp_type, case_type, loop_limit)
+        non_line_graph_abs_err.display(ev_type, pp_type, bounds, case_type, "absolute", loop_limit)
+        non_line_graph_rel_err.display(ev_type, pp_type, bounds, case_type, "relative", loop_limit)
 
     def F(self, t, A, At, S, M, U):
         X_dot = np.matmul(A, S[t, 0:2])
@@ -193,20 +202,6 @@ class LinearNudgingAlg:
         x_sig_rel_err_estimates.append(abs(U[0, 0] / S[0, 0]))
         y_sig_rel_err_estimates.append(abs(U[0, 1] / S[0, 1]))  # [abs(xt - x / x), abs(yt - y/ y)]
 
-        # a11_err, a12_err = [a11_estimates[0] - a11], [a12_estimates[0] - a12]
-        # a21_err, a22_err = [a21_estimates[0] - a21], [a22_estimates[0] - a22]
-        #
-        # a11_abs_err, a12_abs_err = [abs(a11_err[0])], [abs(a12_err[0])]
-        # a21_abs_err, a22_abs_err = [abs(a21_err[0])], [abs(a22_err[0])]
-        #
-        # a11_rel_err, a12_rel_err = [abs(a11_err[0] / a11)],  [abs(a12_err[0] / a12)]
-        # a21_rel_err, a22_rel_err  =[abs(a21_err[0] / a21)], [abs(a22_err[0] / a22)]
-
-        # x_estimates, y_estimates, xt_estimates, yt_estimates = [S[0, 0]], [S[0, 1]], [S[0, 2]], [S[0, 3]]
-        # U1_indx_j = S1_indx_j = At1_indx_i = At1_indx_j = U2_indx_j = S2_indx_j = At2_indx_i = At2_indx_j = -1
-        # x_sig_err_estimates, y_sig_err_estimates = [U[0, 0]], [U[0, 1]]
-        # x_sig_abs_err_estimates, y_sig_abs_err_estimates = [abs(U[0, 0])], [abs(U[0, 1])]
-        # x_sig_rel_err_estimates, y_sig_rel_err_estimates = [abs(U[0, 0] / S[0, 0] )], [abs(U[0, 1] / S[0, 1])] # [abs(xt - x / x), abs(yt - y/ y)]
 
         # Parameters
         param_1_update_times, param_2_update_times = [], []

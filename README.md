@@ -9,7 +9,7 @@ this project utilizes a nudging algorithm for the purpose of parameter recovery 
 
 HYPOTHESIS
 
-The nudging algorithm’s performance in recovering parameters in a given matrix are dependent on the dynamics of said matrix's solution.
+The nudging algorithm’s performance in recovering parameters in a given matrix are not dependent on the dynamics of said matrix's solution.
 
 --------------------------------------------------------------------------------------------------
 

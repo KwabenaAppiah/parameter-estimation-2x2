@@ -1,4 +1,4 @@
-# parameter-estimation
+# Parameter Estimation
 
  BACKGROUND
 
